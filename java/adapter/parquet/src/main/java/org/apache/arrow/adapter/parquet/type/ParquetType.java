@@ -18,17 +18,18 @@
 package org.apache.arrow.adapter.parquet.type;
 
 
+/** Mirrors parquet::Type. */
 public enum ParquetType {
 
-    BOOLEAN,  //  = 0,
-    INT32,  //  = 1,
-    INT64,  //  = 2,
-    INT96,  // = 3,
-    FLOAT,  // = 4,
-    DOUBLE,  // = 5,
-    BYTE_ARRAY,  // = 6,
-    FIXED_LEN_BYTE_ARRAY,  // = 7,
+  BOOLEAN, // = 0,
+  INT32, // = 1,
+  INT64, // = 2,
+  INT96, // = 3,
+  FLOAT, // = 4,
+  DOUBLE, // = 5,
+  BYTE_ARRAY, // = 6,
+  FIXED_LEN_BYTE_ARRAY, // = 7,
 
-    // Should always be last element.
-    UNDEFINED
+  // Should always be last element.
+  UNDEFINED
 }

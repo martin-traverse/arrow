@@ -17,19 +17,21 @@
 
 package org.apache.arrow.adapter.parquet.type;
 
+/** Logical type class for enum types. */
 public class EnumLogicalType extends LogicalType {
 
-    public EnumLogicalType() {
+  /** Logical type class for enum types. */
+  public EnumLogicalType() {
 
-        super(LogicalType.Type.ENUM, SortOrder.UNSIGNED,
-                Compatability.SIMPLE_COMPATIBLE, Applicability.SIMPLE_APPLICABLE,
-                ConvertedType.ENUM, ParquetType.BYTE_ARRAY);
-    }
+    super(LogicalType.Type.ENUM, SortOrder.UNSIGNED,
+        Compatability.SIMPLE_COMPATIBLE, Applicability.SIMPLE_APPLICABLE,
+        ConvertedType.ENUM, ParquetType.BYTE_ARRAY);
+  }
 
-    @Override
-    public String toString() {
-        return "Enum";
-    }
+  @Override
+  public String toString() {
+    return "Enum";
+  }
 
-    // TODO: toThrift
+  // TODO: toThrift
 }

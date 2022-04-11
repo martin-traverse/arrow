@@ -17,38 +17,40 @@
 
 package org.apache.arrow.adapter.parquet.type;
 
+
+/** Mirrors parquet::ConvertedType. */
 public enum ConvertedType {
 
-    NONE,  // Not a real converted type, but means no converted type is specified
-    UTF8,
-    MAP,
-    MAP_KEY_VALUE,
-    LIST,
-    ENUM,
-    DECIMAL,
-    DATE,
-    TIME_MILLIS,
-    TIME_MICROS,
-    TIMESTAMP_MILLIS,
-    TIMESTAMP_MICROS,
-    UINT_8,
-    UINT_16,
-    UINT_32,
-    UINT_64,
-    INT_8,
-    INT_16,
-    INT_32,
-    INT_64,
-    JSON,
-    BSON,
-    INTERVAL,
+  NONE, // Not a real converted type, but means no converted type is specified
+  UTF8,
+  MAP,
+  MAP_KEY_VALUE,
+  LIST,
+  ENUM,
+  DECIMAL,
+  DATE,
+  TIME_MILLIS,
+  TIME_MICROS,
+  TIMESTAMP_MILLIS,
+  TIMESTAMP_MICROS,
+  UINT_8,
+  UINT_16,
+  UINT_32,
+  UINT_64,
+  INT_8,
+  INT_16,
+  INT_32,
+  INT_64,
+  JSON,
+  BSON,
+  INTERVAL,
 
-    // DEPRECATED INVALID ConvertedType for all-null data.
-    // Only useful for reading legacy files written out by interim Parquet C++ releases.
-    // For writing, always emit LogicalType::Null instead.
-    // See PARQUET-1990.
-    NA, // = 25
+  // DEPRECATED INVALID ConvertedType for all-null data.
+  // Only useful for reading legacy files written out by interim Parquet C++ releases.
+  // For writing, always emit LogicalType::Null instead.
+  // See PARQUET-1990.
+  NA, // = 25
 
-    // Not a real converted type; should always be last element
-    UNDEFINED;  // = 26
+  // Not a real converted type; should always be last element
+  UNDEFINED // = 26
 }

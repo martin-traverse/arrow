@@ -15,22 +15,24 @@
  * limitations under the License.
  */
 
-package org.apache.arrow.adapter.parquet.type;;
+package org.apache.arrow.adapter.parquet.type;
 
 
+/** Logical type class for string type. */
 public class StringLogicalType extends LogicalType {
 
-    public StringLogicalType() {
+  /** Logical type class for string type. */
+  public StringLogicalType() {
 
-        super(LogicalType.Type.STRING, SortOrder.UNSIGNED,
-                Compatability.SIMPLE_COMPATIBLE, Applicability.SIMPLE_APPLICABLE,
-                ConvertedType.UINT_8, ParquetType.BYTE_ARRAY);
-    }
+    super(LogicalType.Type.STRING, SortOrder.UNSIGNED,
+        Compatability.SIMPLE_COMPATIBLE, Applicability.SIMPLE_APPLICABLE,
+        ConvertedType.UINT_8, ParquetType.BYTE_ARRAY);
+  }
 
-    @Override
-    public String toString() {
-        return "String";
-    }
+  @Override
+  public String toString() {
+    return "String";
+  }
 
-    // TODO: toThrift
+  // TODO: toThrift
 }

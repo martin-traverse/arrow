@@ -17,8 +17,21 @@
 
 package org.apache.arrow.adapter.parquet.type;
 
+
+/**
+ * Sort order for page and column statistics.
+ *
+ * Types are associated with sort orders (e.g., UTF8 columns should use UNSIGNED)
+ * and column stats are aggregated using a sort order. As of parquet-format version 2.3.1,
+ * the order used to aggregate stats is always SIGNED and is not stored in the Parquet file.
+ * These stats are discarded for types that need unsigned. See PARQUET-686.
+ *
+ * Reference:
+ * parquet-mr/parquet-hadoop/src/main/java/org/apache/parquet/
+ * format/converter/ParquetMetadataConverter.java
+ */
 public enum SortOrder {
-    SIGNED,
-    UNSIGNED,
-    UNKNOWN
+  SIGNED,
+  UNSIGNED,
+  UNKNOWN
 }

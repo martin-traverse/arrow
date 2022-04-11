@@ -17,5 +17,13 @@
 
 package org.apache.arrow.adapter.parquet;
 
+
+/**
+ * The ColumnDescriptor encapsulates information necessary to interpret primitive column
+ * data in the context of a particular schema.
+ *
+ * We have to examine the node structure of a column's path to the root in the schema tree
+ * to be able to reassemble the nested structure from the repetition and definition levels.
+ */
 public class ColumnDescriptor {
 }

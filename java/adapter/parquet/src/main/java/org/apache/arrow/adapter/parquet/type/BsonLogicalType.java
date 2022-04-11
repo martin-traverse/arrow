@@ -18,19 +18,21 @@
 package org.apache.arrow.adapter.parquet.type;
 
 
+/** Logical type class for BSON type. */
 public class BsonLogicalType extends LogicalType {
 
-    public BsonLogicalType() {
+  /** Logical type class for BSON type. */
+  public BsonLogicalType() {
 
-        super(LogicalType.Type.BSON, SortOrder.UNSIGNED,
-                Compatability.SIMPLE_COMPATIBLE, Applicability.SIMPLE_APPLICABLE,
-                ConvertedType.BSON, ParquetType.BYTE_ARRAY);
-    }
+    super(LogicalType.Type.BSON, SortOrder.UNSIGNED,
+        Compatability.SIMPLE_COMPATIBLE, Applicability.SIMPLE_APPLICABLE,
+        ConvertedType.BSON, ParquetType.BYTE_ARRAY);
+  }
 
-    @Override
-    public String toString() {
-        return "BSON";
-    }
+  @Override
+  public String toString() {
+    return "BSON";
+  }
 
-    // TODO: toThrift
+  // TODO: toThrift
 }

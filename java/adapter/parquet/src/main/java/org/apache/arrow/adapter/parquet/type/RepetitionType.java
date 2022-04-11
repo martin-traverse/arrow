@@ -17,11 +17,14 @@
 
 package org.apache.arrow.adapter.parquet.type;
 
+
+/** Mirrors parquet::FieldRepetitionType. */
 public enum RepetitionType {
 
-    REQUIRED,  // 0
-    OPTIONAL,  // 1
-    REPEATED,  // 2
+  REQUIRED, // 0
+  OPTIONAL, // 1
+  REPEATED, // 2
 
-    /*Always last*/ UNDE;
+  /*Always last*/
+  UNDE
 }

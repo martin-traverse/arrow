@@ -17,19 +17,22 @@
 
 package org.apache.arrow.adapter.parquet.type;
 
+
+/** Logical type class for list types. */
 public class ListLogicalType extends LogicalType {
 
-    public ListLogicalType() {
+  /** Logical type class for list types. */
+  public ListLogicalType() {
 
-        super(LogicalType.Type.LIST, SortOrder.UNKNOWN,
-                Compatability.SIMPLE_COMPATIBLE, Applicability.INAPPLICABLE,
-                ConvertedType.LIST);
-    }
+    super(LogicalType.Type.LIST, SortOrder.UNKNOWN,
+        Compatability.SIMPLE_COMPATIBLE, Applicability.INAPPLICABLE,
+        ConvertedType.LIST);
+  }
 
-    @Override
-    public String toString() {
-        return "List";
-    }
+  @Override
+  public String toString() {
+    return "List";
+  }
 
-    // TODO: toThrift
+  // TODO: toThrift
 }

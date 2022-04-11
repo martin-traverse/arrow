@@ -18,28 +18,30 @@
 package org.apache.arrow.adapter.parquet.type;
 
 
+/** Logical type class for map types. */
 public class MapLogicalType extends LogicalType {
 
-    public MapLogicalType() {
+  /** Logical type class for map types. */
+  public MapLogicalType() {
 
-        super(LogicalType.Type.MAP, SortOrder.UNKNOWN,
-                Compatability.SIMPLE_COMPATIBLE, Applicability.INAPPLICABLE,
-                ConvertedType.MAP);
-    }
+    super(LogicalType.Type.MAP, SortOrder.UNKNOWN,
+        Compatability.SIMPLE_COMPATIBLE, Applicability.INAPPLICABLE,
+        ConvertedType.MAP);
+  }
 
-    @Override
-    public String toString() {
-        return "Map";
-    }
+  @Override
+  public String toString() {
+    return "Map";
+  }
 
-    // TODO: toThrift
+  // TODO: toThrift
 
-    @Override
-    public boolean isCompatible(ConvertedType convertedType, DecimalMetadata convertedDecimalMetadata) {
+  @Override
+  public boolean isCompatible(ConvertedType convertedType, DecimalMetadata convertedDecimalMetadata) {
 
-        // allow MAP_KEY_VALUE as a compatible converted type
+    // allow MAP_KEY_VALUE as a compatible converted type
 
-        return (convertedType == ConvertedType.MAP || convertedType == ConvertedType.MAP_KEY_VALUE)
-                && convertedDecimalMetadata.isSet();
-    }
+    return (convertedType == ConvertedType.MAP || convertedType == ConvertedType.MAP_KEY_VALUE) &&
+        convertedDecimalMetadata.isSet();
+  }
 }

@@ -17,18 +17,21 @@
 
 package org.apache.arrow.adapter.parquet.type;
 
+
+/** Logical type class for the null type. */
 public class NullLogicalType extends LogicalType {
 
-    public NullLogicalType() {
+  /** Logical type class for the null type. */
+  public NullLogicalType() {
 
-        super(LogicalType.Type.NIL, SortOrder.UNKNOWN,
-                Compatability.INCOMPATIBLE, Applicability.UNIVERSAL_APPLICABLE);
-    }
+    super(LogicalType.Type.NIL, SortOrder.UNKNOWN,
+        Compatability.INCOMPATIBLE, Applicability.UNIVERSAL_APPLICABLE);
+  }
 
-    @Override
-    public String toString() {
-        return "Null";
-    }
+  @Override
+  public String toString() {
+    return "Null";
+  }
 
-    // TODO: toThrift
+  // TODO: toThrift
 }

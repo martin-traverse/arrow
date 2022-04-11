@@ -23,69 +23,80 @@ import java.util.Collections;
 import java.util.List;
 
 
+/**
+ * Representation of the hierarchical path for a column.
+ */
 public class ColumnPath {
 
-    private final List<String> path;
+  private final List<String> path;
 
-    public ColumnPath() {
-        path = new ArrayList<>();
+  /** Default constructor, column path is empty. **/
+  public ColumnPath() {
+    path = new ArrayList<>();
+  }
+
+  /** Construct a column for the given path. **/
+  public ColumnPath(List<String> path) {
+    this.path = path;
+  }
+
+  /** Construct a column path from a dotted string. **/
+  public static ColumnPath fromDotString(String dotString) {
+
+    String[] items = dotString.split("\\.");
+    List<String> path = Arrays.asList(items);
+
+    return new ColumnPath(path);
+  }
+
+  /** Construct a column path from a schema node, by traversing the node hierarchy. **/
+  public static ColumnPath fromNode(SchemaNode node) {
+
+    // Build the path in reverse order as we traverse the nodes to the top
+    List<String> rpath = new ArrayList<>();
+
+    SchemaNode cursor = node;
+
+    // The schema node is not part of the ColumnPath
+    while (cursor.parent() != null) {
+      rpath.add(cursor.name());
+      cursor = cursor.parent();
     }
 
-    public ColumnPath(List<String> path) {
-        this.path = path;
+    // Build ColumnPath in correct order
+    Collections.reverse(rpath);
+    return new ColumnPath(rpath);
+  }
+
+  /** Create a new column path, by extending this path with an extra node (the current path is not modified). **/
+  public ColumnPath extend(String nodeName) {
+
+    List<String> newPath = new ArrayList<>(path.size() + 1);
+    newPath.addAll(path);
+    newPath.add(nodeName);
+
+    return new ColumnPath(newPath);
+  }
+
+  /** Build the dot string notation for this column path. **/
+  public String toDotString() {
+
+    StringBuilder sb = new StringBuilder();
+
+    for (int i = 0; i < path.size(); i++) {
+
+      if (i != 0) {
+        sb.append(".");
+      }
+
+      sb.append(path.get(i));
     }
 
-    public static ColumnPath fromDotString(String dotString) {
+    return sb.toString();
+  }
 
-        String[] items = dotString.split("\\.");
-        List<String> path = Arrays.asList(items);
-
-        return new ColumnPath(path);
-    }
-
-    public static ColumnPath fromNode(SchemaNode node) {
-
-        // Build the path in reverse order as we traverse the nodes to the top
-        List<String> rpath = new ArrayList<>();
-
-        SchemaNode cursor = node;
-
-        // The schema node is not part of the ColumnPath
-        while (cursor.parent() != null) {
-            rpath.add(cursor.name());
-            cursor = cursor.parent();
-        }
-
-        // Build ColumnPath in correct order
-        Collections.reverse(rpath);
-        return new ColumnPath(rpath);
-    }
-
-    public ColumnPath extend(String nodeName) {
-
-        List<String> newPath = new ArrayList<>(path.size() + 1);
-        newPath.addAll(path);
-        newPath.add(nodeName);
-
-        return new ColumnPath(newPath);
-    }
-
-    public String toDotString() {
-
-        StringBuilder sb = new StringBuilder();
-
-        for (int i = 0; i < path.size(); i++) {
-
-            if (i != 0)
-                sb.append(".");
-
-            sb.append(path.get(i));
-        }
-
-        return sb.toString();
-    }
-
-    public List<String> toDotVector() {
-        return path;
-    }
+  /** Get the column path as a list of string segments. **/
+  public List<String> toDotVector() {
+    return path;
+  }
 }

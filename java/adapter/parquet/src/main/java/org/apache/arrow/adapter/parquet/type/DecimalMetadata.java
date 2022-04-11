@@ -18,33 +18,36 @@
 package org.apache.arrow.adapter.parquet.type;
 
 
+/** Logical type class for decimal type. */
 public class DecimalMetadata {
 
-    private boolean isSet;
-    private int scale;
-    private int precision;
+  private boolean isSet;
+  private int scale;
+  private int precision;
 
-    public DecimalMetadata(boolean isSet, int scale, int precision) {
-        this.isSet = isSet;
-        this.scale = scale;
-        this.precision = precision;
-    }
+  /** Logical type class for decimal type. */
+  public DecimalMetadata(boolean isSet, int scale, int precision) {
+    this.isSet = isSet;
+    this.scale = scale;
+    this.precision = precision;
+  }
 
-    public void reset() {
-        isSet = false;
-        scale = -1;
-        precision = -1;
-    }
+  /** Reset the decimal type (isSet will become false). */
+  public void reset() {
+    isSet = false;
+    scale = -1;
+    precision = -1;
+  }
 
-    public boolean isSet() {
-        return isSet;
-    }
+  public boolean isSet() {
+    return isSet;
+  }
 
-    public int scale() {
-        return scale;
-    }
+  public int scale() {
+    return scale;
+  }
 
-    public int precision() {
-        return precision;
-    }
+  public int precision() {
+    return precision;
+  }
 }

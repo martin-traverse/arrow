@@ -18,13 +18,16 @@
 package org.apache.arrow.adapter.parquet;
 
 
-public class ParquetException extends RuntimeException{
+/**
+ * An error occurred in the Parquet adapter.
+ */
+public class ParquetException extends RuntimeException {
 
-    public ParquetException(String msg) {
-        super(msg);
-    }
+  public ParquetException(String msg) {
+    super(msg);
+  }
 
-    public ParquetException(String msg, Throwable cause) {
-        super(msg, cause);
-    }
+  public ParquetException(String msg, Throwable cause) {
+    super(msg, cause);
+  }
 }

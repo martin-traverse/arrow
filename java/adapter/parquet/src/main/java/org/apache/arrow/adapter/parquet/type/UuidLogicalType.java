@@ -17,19 +17,22 @@
 
 package org.apache.arrow.adapter.parquet.type;
 
+
+/** Logical type class for UUID type. */
 public class UuidLogicalType extends LogicalType {
 
-    public UuidLogicalType() {
+  /** Logical type class for UUID type. */
+  public UuidLogicalType() {
 
-        super(LogicalType.Type.UUID, SortOrder.UNSIGNED,
-                Compatability.INCOMPATIBLE, Applicability.TYPE_LENGTH_APPLICABLE,
-                ParquetType.FIXED_LEN_BYTE_ARRAY, 16);
-    }
+    super(LogicalType.Type.UUID, SortOrder.UNSIGNED,
+        Compatability.INCOMPATIBLE, Applicability.TYPE_LENGTH_APPLICABLE,
+        ParquetType.FIXED_LEN_BYTE_ARRAY, 16);
+  }
 
-    @Override
-    public String toString() {
-        return "UUID";
-    }
+  @Override
+  public String toString() {
+    return "UUID";
+  }
 
-    // TODO: toThrift
+  // TODO: toThrift
 }

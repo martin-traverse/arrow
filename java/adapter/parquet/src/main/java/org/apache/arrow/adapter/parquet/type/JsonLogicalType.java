@@ -18,19 +18,21 @@
 package org.apache.arrow.adapter.parquet.type;
 
 
+/** Logical type class for JSON type. */
 public class JsonLogicalType extends LogicalType {
 
-    public JsonLogicalType() {
+  /** Logical type class for JSON type. */
+  public JsonLogicalType() {
 
-        super(LogicalType.Type.JSON, SortOrder.UNSIGNED,
-                Compatability.SIMPLE_COMPATIBLE, Applicability.SIMPLE_APPLICABLE,
-                ConvertedType.JSON, ParquetType.BYTE_ARRAY);
-    }
+    super(LogicalType.Type.JSON, SortOrder.UNSIGNED,
+        Compatability.SIMPLE_COMPATIBLE, Applicability.SIMPLE_APPLICABLE,
+        ConvertedType.JSON, ParquetType.BYTE_ARRAY);
+  }
 
-    @Override
-    public String toString() {
-        return "JSON";
-    }
+  @Override
+  public String toString() {
+    return "JSON";
+  }
 
-    // TODO: toThrift
+  // TODO: toThrift
 }

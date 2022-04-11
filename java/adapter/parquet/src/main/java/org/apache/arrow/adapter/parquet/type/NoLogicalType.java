@@ -17,17 +17,20 @@
 
 package org.apache.arrow.adapter.parquet.type;
 
+
+/** Logical type class for objects with no type (explicit "none" type, which is different from undefined). */
 public class NoLogicalType extends LogicalType {
 
-    public NoLogicalType() {
+  /** Logical type class for objects with no type (explicit "none" type, which is different from undefined). */
+  public NoLogicalType() {
 
-        super(LogicalType.Type.NONE, SortOrder.UNKNOWN,
-                Compatability.SIMPLE_COMPATIBLE, Applicability.UNIVERSAL_APPLICABLE,
-                ConvertedType.NONE);
-    }
+    super(LogicalType.Type.NONE, SortOrder.UNKNOWN,
+        Compatability.SIMPLE_COMPATIBLE, Applicability.UNIVERSAL_APPLICABLE,
+        ConvertedType.NONE);
+  }
 
-    @Override
-    public String toString() {
-        return "None";
-    }
+  @Override
+  public String toString() {
+    return "None";
+  }
 }

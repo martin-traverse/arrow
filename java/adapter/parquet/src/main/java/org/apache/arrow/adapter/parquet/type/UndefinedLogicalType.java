@@ -17,17 +17,20 @@
 
 package org.apache.arrow.adapter.parquet.type;
 
+
+/** Logical type class for undefined types. */
 public class UndefinedLogicalType extends LogicalType {
 
-    public UndefinedLogicalType() {
+  /** Logical type class for undefined types. */
+  public UndefinedLogicalType() {
 
-        super(LogicalType.Type.UNDEFINED, SortOrder.UNKNOWN,
-                Compatability.SIMPLE_COMPATIBLE, Applicability.UNIVERSAL_APPLICABLE,
-                ConvertedType.UNDEFINED);
-    }
+    super(LogicalType.Type.UNDEFINED, SortOrder.UNKNOWN,
+        Compatability.SIMPLE_COMPATIBLE, Applicability.UNIVERSAL_APPLICABLE,
+        ConvertedType.UNDEFINED);
+  }
 
-    @Override
-    public String toString() {
-        return "Undefined";
-    }
+  @Override
+  public String toString() {
+    return "Undefined";
+  }
 }
