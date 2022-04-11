@@ -18,6 +18,8 @@
 package org.apache.arrow.adapter.parquet.type;
 
 
+import org.apache.arrow.adapter.parquet.ParquetException;
+
 /** Logical type class for int types. */
 public class IntLogicalType extends LogicalType {
 
@@ -30,6 +32,11 @@ public class IntLogicalType extends LogicalType {
     super(LogicalType.Type.INT, signed ? SortOrder.SIGNED : SortOrder.UNSIGNED,
         Compatability.CUSTOM_COMPATIBILITY, Applicability.CUSTOM_APPLICABILITY);
 
+    if (width != 8 && width != 16 && width != 32 && width != 64) {
+      throw new ParquetException(
+          "Bit width must be exactly 8, 16, 32, or 64 for Int logical type");
+    }
+
     this.width = width;
     this.signed = signed;
   }
@@ -40,6 +47,26 @@ public class IntLogicalType extends LogicalType {
 
   public boolean isSigned() {
     return signed;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) { return true; }
+    if (!(o instanceof IntLogicalType)) { return false; }
+    if (!super.equals(o)) { return false; }
+
+    IntLogicalType that = (IntLogicalType) o;
+
+    if (width != that.width) { return false; }
+    return signed == that.signed;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + width;
+    result = 31 * result + (signed ? 1 : 0);
+    return result;
   }
 
   @Override
@@ -117,7 +144,7 @@ public class IntLogicalType extends LogicalType {
   }
 
   @Override
-  public String toJSON() {
+  public String toJson() {
 
     return "{\"Type\": \"Int\", \"bitWidth\": " + width + ", \"isSigned\": " + signed + "}";
   }
@@ -134,16 +161,4 @@ public class IntLogicalType extends LogicalType {
   //        return type;
   //    }
 
-  @Override
-  public boolean equals(Object other) {
-
-    boolean eq = false;
-
-    if (other instanceof  IntLogicalType) {
-      IntLogicalType otherInt = (IntLogicalType) other;
-      eq = width == otherInt.width && signed == otherInt.signed;
-    }
-
-    return eq;
-  }
 }

@@ -22,32 +22,44 @@ package org.apache.arrow.adapter.parquet.type;
 public class DecimalMetadata {
 
   private boolean isSet;
-  private int scale;
   private int precision;
+  private int scale;
 
   /** Logical type class for decimal type. */
-  public DecimalMetadata(boolean isSet, int scale, int precision) {
+  public DecimalMetadata(boolean isSet, int precision, int scale) {
     this.isSet = isSet;
-    this.scale = scale;
     this.precision = precision;
+    this.scale = scale;
+  }
+
+  /** Create decimal metadata that is zeroed out (isSet will be false). */
+  public static DecimalMetadata zeroUnset() {
+    return new DecimalMetadata(false, 0, 0);
+  }
+
+  /** Mutate this decimal metadata with the supplied values. */
+  public void set(boolean isSet, int precision, int scale) {
+    this.isSet = isSet;
+    this.precision = precision;
+    this.scale = scale;
   }
 
   /** Reset the decimal type (isSet will become false). */
   public void reset() {
     isSet = false;
-    scale = -1;
     precision = -1;
+    scale = -1;
   }
 
   public boolean isSet() {
     return isSet;
   }
 
-  public int scale() {
-    return scale;
-  }
-
   public int precision() {
     return precision;
+  }
+
+  public int scale() {
+    return scale;
   }
 }

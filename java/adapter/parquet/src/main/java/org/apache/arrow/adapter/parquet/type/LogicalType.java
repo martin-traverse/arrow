@@ -48,10 +48,20 @@ public abstract class LogicalType {
 
   /** Time units for temporal types. */
   public enum TimeUnit {
-    UNKNOWN, // = 0,
-    MILLIS, //= 1
-    MICROS,
-    NANOS
+    UNKNOWN("unknown"), // = 0,
+    MILLIS("milliseconds"), //= 1
+    MICROS("microseconds"),
+    NANOS("nanoseconds");
+
+    private final String displayName;
+
+    TimeUnit(String displayName) {
+      this.displayName = displayName;
+    }
+
+    String displayName() {
+      return displayName;
+    }
   }
 
   /** Describe compatibility behavior, for isCompatible() and toConvertedType().
@@ -123,6 +133,14 @@ public abstract class LogicalType {
   protected LogicalType(
       Type type, SortOrder order,
       Compatability compatability, Applicability applicability,
+      ParquetType primitiveType) {
+
+    this(type, order, compatability, applicability, ConvertedType.NONE, primitiveType, -1);
+  }
+
+  protected LogicalType(
+      Type type, SortOrder order,
+      Compatability compatability, Applicability applicability,
       ParquetType primitiveType, int primitiveLength) {
 
     this(type, order, compatability, applicability, ConvertedType.NONE, primitiveType, primitiveLength);
@@ -159,21 +177,133 @@ public abstract class LogicalType {
         throw new ParquetException("Primitive (Parquet) type and length are required for type length applicability");
       }
     }
-
   }
 
-  /// \brief If possible, return a logical type equivalent to the given legacy
-  /// converted type (and decimal metadata if applicable).
-  //    public static LogicalType fromConvertedType(
-  //      ConvertedType convertedType,
-  //      const parquet::schema::DecimalMetadata converted_decimal_metadata = {false, -1,
-  //            -1});
+  /** f Return the enumerated type of this logical type. */
+  public LogicalType.Type type() {
+    return type;
+  }
 
-  //    /// \brief Return the logical type represented by the Thrift intermediary object.
-  //    public static LogicalType fromThrift(
-  //      const parquet::format::LogicalType& thrift_logical_type);
+  /** Return the appropriate sort order for this logical type. */
+  public SortOrder sortOrder() {
+    return order;
+  }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) { return true; }
+    if (!(o instanceof LogicalType)) { return false; }
 
+    LogicalType that = (LogicalType) o;
+
+    if (primitiveLength != that.primitiveLength) { return false; }
+    if (type != that.type) { return false; }
+    if (order != that.order) { return false; }
+    if (compatability != that.compatability) { return false; }
+    if (applicability != that.applicability) { return false; }
+    if (convertedType != that.convertedType) { return false; }
+    return primitiveType == that.primitiveType;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = type != null ? type.hashCode() : 0;
+    result = 31 * result + (order != null ? order.hashCode() : 0);
+    result = 31 * result + (compatability != null ? compatability.hashCode() : 0);
+    result = 31 * result + (applicability != null ? applicability.hashCode() : 0);
+    result = 31 * result + (convertedType != null ? convertedType.hashCode() : 0);
+    result = 31 * result + (primitiveType != null ? primitiveType.hashCode() : 0);
+    result = 31 * result + primitiveLength;
+    return result;
+  }
+
+  /**
+   * If possible, return a logical type equivalent to the given legacy converted type
+   * (and decimal metadata if applicable).
+   */
+  public static LogicalType fromConvertedType(ConvertedType convertedType, DecimalMetadata convertedDecimalMetadata) {
+
+    // Default for decimal metadata in CPP implementation is {false, -1, -1}, or use DecimalMetadata.reset();
+
+    switch (convertedType) {
+      
+      case UTF8:
+        return new StringLogicalType();
+        
+      case MAP_KEY_VALUE:
+      case MAP:
+        return new MapLogicalType();
+        
+      case LIST:
+        return new ListLogicalType();
+        
+      case ENUM:
+        return new EnumLogicalType();
+        
+      case DECIMAL:
+        return new DecimalLogicalType(convertedDecimalMetadata.precision(), convertedDecimalMetadata.scale());
+        
+      case DATE:
+        return new DateLogicalType();
+        
+      case TIME_MILLIS:
+        return new TimeLogicalType(true, TimeUnit.MILLIS);
+        
+      case TIME_MICROS:
+        return new TimeLogicalType(true, TimeUnit.MICROS);
+
+      case TIMESTAMP_MILLIS:
+        return new TimestampLogicalType(true, TimeUnit.MILLIS,
+            /* isFromConvertedType = */ true,
+            /* forceSetConvertedType = */ false);
+        
+      case TIMESTAMP_MICROS:
+        return new TimestampLogicalType(true, TimeUnit.MICROS,
+            /* isFromConvertedType = */ true,
+            /* forceSetConvertedType = */ false);
+        
+      case INTERVAL:
+        return new IntervalLogicalType();
+        
+      case INT_8:
+        return new IntLogicalType(8, true);
+      case INT_16:
+        return new IntLogicalType(16, true);
+      case INT_32:
+        return new IntLogicalType(32, true);
+      case INT_64:
+        return new IntLogicalType(64, true);
+      case UINT_8:
+        return new IntLogicalType(8, false);
+      case UINT_16:
+        return new IntLogicalType(16, false);
+      case UINT_32:
+        return new IntLogicalType(32, false);
+      case UINT_64:
+        return new IntLogicalType(64, false);
+      case JSON:
+        return new JsonLogicalType();
+      case BSON:
+        return new BsonLogicalType();
+      case NA:
+        return new NullLogicalType();
+      case NONE:
+        return new NoLogicalType();
+
+      case UNDEFINED:
+      default:
+        return new UndefinedLogicalType();
+    }
+  }
+
+  // TODO: Thrift
+  // CPP type is format::LogicalType, in parquet_types.h under src/generated
+
+  // /** Return the logical type represented by the Thrift intermediary object. */
+  // public static LogicalType fromThrift(ThriftLogicalType thrift_logical_type) {
+  //
+  // }
+  
   public static LogicalType string() {
     return new StringLogicalType();
   }
@@ -192,17 +322,17 @@ public abstract class LogicalType {
 
   public static LogicalType decimal(int precision, int scale /*= 0 */) {
 
-    return null; // todo
+    return new DecimalLogicalType(precision, scale);
   }
 
   public static LogicalType date() {
 
-    return null; // todo
+    return new DateLogicalType();
   }
 
   public static LogicalType time(boolean isAdjustedToUtc, TimeUnit timeUnit) {
 
-    return null; // todo
+    return new TimeLogicalType(isAdjustedToUtc, timeUnit);
   }
 
   /**
@@ -222,12 +352,12 @@ public abstract class LogicalType {
       boolean isAdjustedToUtc, TimeUnit timeUnit,
       boolean isFromConvertedType /* = false */, boolean forceSetConvertedType /* = false */) {
 
-    return null; // todo
+    return new TimestampLogicalType(isAdjustedToUtc, timeUnit, isFromConvertedType, forceSetConvertedType);
   }
 
   public static LogicalType interval() {
 
-    return null; // todo
+    return new IntervalLogicalType();
   }
 
   public static LogicalType int_(int bitWidth, boolean isSigned) {
@@ -328,10 +458,11 @@ public abstract class LogicalType {
   }
 
   /** Return a printable representation of this logical type. */
+  @Override
   public abstract String toString();
 
   /** Return a JSON representation of this logical type. */
-  public String toJSON() {
+  public String toJson() {
 
     return "{\"Type\": \"" +
         this +
@@ -345,33 +476,6 @@ public abstract class LogicalType {
   //    public Format.LogicalType toThrift() {
   //
   //    }
-
-  /**
-   * Equality for logical types.
-   *
-   * Some types may provide their own implementation of equality, for example types with scale, signedness etc.
-   */
-  @Override
-  public boolean equals(Object other) {
-
-    if (!(other instanceof LogicalType)) {
-      return false;
-    }
-
-    LogicalType otherType = (LogicalType) other;
-
-    return otherType.type == type;
-  }
-
-  /** f Return the enumerated type of this logical type. */
-  public LogicalType.Type type() {
-    return type;
-  }
-
-  /** Return the appropriate sort order for this logical type. */
-  public SortOrder sortOrder() {
-    return order;
-  }
 
   public boolean isString() {
     return type == Type.STRING;
@@ -417,15 +521,15 @@ public abstract class LogicalType {
     return type == Type.NIL;
   }
 
-  public boolean isJSON() {
+  public boolean isJson() {
     return type == Type.JSON;
   }
 
-  public boolean isBSON() {
+  public boolean isBson() {
     return type == Type.BSON;
   }
 
-  public boolean isUUID() {
+  public boolean isUuid() {
     return type == Type.UUID;
   }
 
@@ -451,9 +555,8 @@ public abstract class LogicalType {
     return !isNested();
   }
 
-  /** Return true if this logical type is included in the Thrift output for its node. */
   public boolean isSerialized() {
 
-    return false; // todo
+    return !(type == Type.NONE || type == Type.UNDEFINED);
   }
 }
