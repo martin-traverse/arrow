@@ -17,6 +17,7 @@
 
 package org.apache.arrow.adapter.parquet;
 
+import java.util.Objects;
 
 import org.apache.arrow.adapter.parquet.type.ConvertedType;
 import org.apache.arrow.adapter.parquet.type.LogicalType;
@@ -28,7 +29,7 @@ import org.apache.arrow.adapter.parquet.type.RepetitionType;
  *
  * A type has a name, repetition level, and optionally a logical type (ConvertedType in Parquet metadata parlance).
  */
-public class SchemaNode {
+public abstract class SchemaNode {
 
   /** Schema nodes can have either primitive or group type. **/
   public enum Type {
@@ -36,24 +37,23 @@ public class SchemaNode {
     GROUP
   }
 
-
-  protected SchemaNode.Type type;
-  protected String name;
-  protected RepetitionType repetition;
+  protected final SchemaNode.Type nodeType;
+  protected final String name;
+  protected final RepetitionType repetition;
   protected ConvertedType convertedType;
   protected LogicalType logicalType;
-  protected int fieldId;
+  protected final int fieldId;
 
   // Nodes should not be shared, they have a single parent.
-  private final SchemaNode parent;
+  private SchemaNode parent;
 
   protected SchemaNode(
-      SchemaNode.Type type, String name,
+      SchemaNode.Type nodeType, String name,
       RepetitionType repetition,
       ConvertedType convertedType, /* = ConvertedType::NONE,*/
       int fieldId /* = -1*/) {
 
-    this.type = type;
+    this.nodeType = nodeType;
     this.name = name;
     this.repetition = repetition;
     this.convertedType = convertedType;
@@ -63,12 +63,12 @@ public class SchemaNode {
   }
 
   protected SchemaNode(
-      SchemaNode.Type type, String name,
+      SchemaNode.Type nodeType, String name,
       RepetitionType repetition,
       LogicalType logicalType,
       int fieldId /* = -1 */) {
 
-    this.type = type;
+    this.nodeType = nodeType;
     this.name = name;
     this.repetition = repetition;
     this.convertedType = ConvertedType.NONE;
@@ -77,49 +77,12 @@ public class SchemaNode {
     this.parent = null;
   }
 
-
-  // virtual ~Node() {}
-
-  public boolean isPrimitive() {
-    return type == Type.PRIMITIVE;
-  }
-
-  public boolean isGroup() {
-    return type == Type.GROUP;
-  }
-
-  public boolean isOptional() {
-    return repetition == RepetitionType.OPTIONAL;
-  }
-
-  public boolean isRepeated() {
-    return repetition == RepetitionType.REPEATED;
-  }
-
-  public boolean isRequired() {
-    return repetition == RepetitionType.REQUIRED;
-  }
-
-  /** Equality for schema nodes. **/
-  @Override
-  public boolean equals(Object other) {
-
-    if (!(other instanceof SchemaNode)) {
-      return false;
-    }
-
-    SchemaNode otherSchema = (SchemaNode) other;
-
-    // todo
-    return false;
-  }
-
   public String name() {
     return name;
   }
 
   public Type nodeType() {
-    return type;
+    return nodeType;
   }
 
   public RepetitionType repetition() {
@@ -145,25 +108,77 @@ public class SchemaNode {
     return parent;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) { return true; }
+    if (!(o instanceof SchemaNode)) { return false; }
+
+    SchemaNode that = (SchemaNode) o;
+
+    if (nodeType != that.nodeType) { return false; }
+    if (!Objects.equals(name, that.name)) { return false; }
+    if (repetition != that.repetition) { return false; }
+    if (convertedType != that.convertedType) { return false; }
+    if (fieldId != that.fieldId) { return false; }
+    return Objects.equals(logicalType, that.logicalType);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = nodeType != null ? nodeType.hashCode() : 0;
+    result = 31 * result + (name != null ? name.hashCode() : 0);
+    result = 31 * result + (repetition != null ? repetition.hashCode() : 0);
+    result = 31 * result + (convertedType != null ? convertedType.hashCode() : 0);
+    result = 31 * result + fieldId;
+    result = 31 * result + (logicalType != null ? logicalType.hashCode() : 0);
+    return result;
+  }
+
+  public boolean isPrimitive() {
+    return nodeType == Type.PRIMITIVE;
+  }
+
+  public boolean isGroup() {
+    return nodeType == Type.GROUP;
+  }
+
+  public boolean isOptional() {
+    return repetition == RepetitionType.OPTIONAL;
+  }
+
+  public boolean isRepeated() {
+    return repetition == RepetitionType.REPEATED;
+  }
+
+  public boolean isRequired() {
+    return repetition == RepetitionType.REQUIRED;
+  }
+
   public ColumnPath path() {
 
-    return null; // todo
+    return ColumnPath.fromNode(this);
   }
 
-  public void toParquet(Object element) {
-
-    // TODO
-  }
-
-
+  public abstract void toParquet(Object element);
 
   protected boolean equalsInternal(SchemaNode other) {
 
-    return false; // todo
+    boolean nameEqual = (name == null && other.name == null) ||
+        (name != null && name.equals(other.name));
+
+    boolean logicalTypeEqual = (logicalType == null && other.logicalType == null) ||
+        (logicalType != null && other.logicalType != null && logicalType.equals(other.logicalType));
+
+    return nodeType == other.nodeType &&
+        nameEqual &&
+        repetition == other.repetition &&
+        convertedType == other.convertedType &&
+        fieldId == other.fieldId() &&
+        logicalTypeEqual;
   }
 
   protected void setParent(SchemaNode parent) {
 
-    // todo
+    this.parent = parent;
   }
 }

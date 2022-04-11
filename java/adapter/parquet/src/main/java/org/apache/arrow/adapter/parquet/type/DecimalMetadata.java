@@ -62,4 +62,24 @@ public class DecimalMetadata {
   public int scale() {
     return scale;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) { return true; }
+    if (o == null || getClass() != o.getClass()) { return false; }
+
+    DecimalMetadata that = (DecimalMetadata) o;
+
+    if (isSet != that.isSet) { return false; }
+    if (precision != that.precision) { return false; }
+    return scale == that.scale;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = (isSet ? 1 : 0);
+    result = 31 * result + precision;
+    result = 31 * result + scale;
+    return result;
+  }
 }

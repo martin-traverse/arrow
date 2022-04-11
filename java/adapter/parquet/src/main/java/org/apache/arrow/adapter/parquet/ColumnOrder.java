@@ -15,24 +15,33 @@
  * limitations under the License.
  */
 
-package org.apache.arrow.adapter.parquet.type;
+package org.apache.arrow.adapter.parquet;
 
 
-/** Logical type class for string type. */
-public class StringLogicalType extends LogicalType {
+/** Column ordering. */
+public class ColumnOrder {
 
-  /** Logical type class for string type. */
-  public StringLogicalType() {
-
-    super(LogicalType.Type.STRING, SortOrder.UNSIGNED,
-        Compatability.SIMPLE_COMPATIBLE, Applicability.SIMPLE_APPLICABLE,
-        ConvertedType.UTF8, ParquetType.BYTE_ARRAY);
+  /** Available column orderings. */
+  public enum Type {
+    UNDEFINED,
+    TYPE_DEFINED_ORDER
   }
 
-  @Override
-  public String toString() {
-    return "String";
+  public static final ColumnOrder UNDEFINED = new ColumnOrder(Type.UNDEFINED);
+  public static final ColumnOrder TYPE_DEFINED = new ColumnOrder(Type.TYPE_DEFINED_ORDER);
+
+  private final Type columnOrder;
+
+  public ColumnOrder(Type columnOrder) {
+    this.columnOrder = columnOrder;
   }
 
-  // TODO: toThrift
+  // Default to Type Defined Order
+  public ColumnOrder() {
+    this.columnOrder = Type.TYPE_DEFINED_ORDER;
+  }
+
+  public Type getOrder() {
+    return columnOrder;
+  }
 }

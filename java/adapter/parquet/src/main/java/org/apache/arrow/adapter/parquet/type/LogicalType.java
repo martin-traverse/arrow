@@ -161,7 +161,7 @@ public abstract class LogicalType {
     this.primitiveLength = primitiveLength;
 
     if (compatability == Compatability.SIMPLE_COMPATIBLE) {
-      if (convertedType == ConvertedType.NONE) {
+      if (convertedType == ConvertedType.UNDEFINED || convertedType == ConvertedType.NA) {
         throw new ParquetException("Converted type is required for simple compatibility");
       }
     }

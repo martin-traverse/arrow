@@ -115,14 +115,7 @@ public class SchemaDescriptor {
   }
 
   /** Equality comparison for schema descriptors. **/
-  @Override
-  public boolean equals(Object other) {
-
-    if (!(other instanceof SchemaDescriptor)) {
-      return false;
-    }
-
-    SchemaDescriptor otherSchema = (SchemaDescriptor) other;
+  public boolean equalTo(SchemaDescriptor other) {
 
     return false; // todo
   }
