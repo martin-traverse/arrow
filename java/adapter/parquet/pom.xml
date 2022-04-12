@@ -54,28 +54,6 @@
 
     <dependencies>
 
-        <!-- https://mvnrepository.com/artifact/org.apache.arrow/arrow-memory-core -->
-        <dependency>
-            <groupId>org.apache.arrow</groupId>
-            <artifactId>arrow-memory-core</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/org.apache.arrow/arrow-memory-netty -->
-        <dependency>
-            <groupId>org.apache.arrow</groupId>
-            <artifactId>arrow-memory-netty</artifactId>
-            <version>${project.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/org.apache.arrow/arrow-vector -->
-        <dependency>
-            <groupId>org.apache.arrow</groupId>
-            <artifactId>arrow-vector</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
         <dependency>
             <groupId>org.apache.thrift</groupId>
             <artifactId>libthrift</artifactId>
@@ -94,12 +72,6 @@
                 </exclusion>
             </exclusions>
 
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.avro</groupId>
-            <artifactId>avro</artifactId>
-            <version>${dep.avro.version}</version>
         </dependency>
 
     </dependencies>
