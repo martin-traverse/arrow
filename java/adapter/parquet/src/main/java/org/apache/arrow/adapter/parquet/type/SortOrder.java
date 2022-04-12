@@ -31,7 +31,80 @@ package org.apache.arrow.adapter.parquet.type;
  * format/converter/ParquetMetadataConverter.java
  */
 public enum SortOrder {
+
   SIGNED,
   UNSIGNED,
-  UNKNOWN
+  UNKNOWN;
+
+  public static SortOrder getSortOrder(LogicalType logicalType, ParquetType primitive) {
+
+    SortOrder o = SortOrder.UNKNOWN;
+
+    if (logicalType != null && logicalType.isValid()) {
+
+      o = (logicalType.isNone() ?
+          defaultSortOrder(primitive) :
+          logicalType.sortOrder());
+    }
+
+    return o;
+  }
+
+  public static SortOrder getSortOrder(ConvertedType converted, ParquetType primitive) {
+    
+    if (converted == ConvertedType.NONE) {
+      return defaultSortOrder(primitive);
+    }
+    
+    switch (converted) {
+      case INT_8:
+      case INT_16:
+      case INT_32:
+      case INT_64:
+      case DATE:
+      case TIME_MICROS:
+      case TIME_MILLIS:
+      case TIMESTAMP_MICROS:
+      case TIMESTAMP_MILLIS:
+        return SortOrder.SIGNED;
+      case UINT_8:
+      case UINT_16:
+      case UINT_32:
+      case UINT_64:
+      case ENUM:
+      case UTF8:
+      case BSON:
+      case JSON:
+        return SortOrder.UNSIGNED;
+      case DECIMAL:
+      case LIST:
+      case MAP:
+      case MAP_KEY_VALUE:
+      case INTERVAL:
+      case NA:    // required instead of default
+      case UNDEFINED:
+      default:
+        return SortOrder.UNKNOWN;
+    }
+  }
+
+  // Return the Sort Order of the Parquet Physical Types
+  public static SortOrder defaultSortOrder(ParquetType primitive) {
+
+    switch (primitive) {
+      case BOOLEAN:
+      case INT32:
+      case INT64:
+      case FLOAT:
+      case DOUBLE:
+        return SortOrder.SIGNED;
+      case BYTE_ARRAY:
+      case FIXED_LEN_BYTE_ARRAY:
+        return SortOrder.UNSIGNED;
+      case INT96:
+      case UNDEFINED:
+      default:
+        return SortOrder.UNKNOWN;
+    }
+  }
 }
