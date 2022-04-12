@@ -39,10 +39,49 @@ public class SchemaPrimitiveNode extends SchemaNode {
   private ColumnOrder columnOrder;
 
   /** Create a schema node from an opaque schema element. */
-  public static SchemaNode fromParquet(Object opaqueElement) {
+  public static SchemaNode fromParquet(org.apache.parquet.format.SchemaElement schemaElement) {
 
-    // TODO: Requires thrift generated
-    return null;
+    int fieldId = schemaElement.isSetField_id() ? schemaElement.getField_id() : -1;
+
+    if (schemaElement.isSetLogicalType()) {
+
+      // updated writer with logical type present
+
+      return new SchemaPrimitiveNode(
+          schemaElement.getName(),
+          convertEnum(RepetitionType.class, schemaElement.getRepetition_type()),
+          LogicalType.fromThrift(schemaElement.getLogicalType()),
+          convertEnum(ParquetType.class, schemaElement.getType()),
+          schemaElement.getType_length(),
+          schemaElement.getField_id());
+    }
+
+    if (schemaElement.isSetConverted_type()) {
+
+      // legacy writer with converted type present
+
+      return new SchemaPrimitiveNode(
+          schemaElement.getName(),
+          convertEnum(RepetitionType.class, schemaElement.getRepetition_type()),
+          convertEnum(ParquetType.class, schemaElement.getType()),
+          convertEnum(ConvertedType.class, schemaElement.getConverted_type()),
+          schemaElement.getType_length(), schemaElement.getPrecision(), schemaElement.getScale(), fieldId);
+    }
+
+    // logical type not present
+
+    return new SchemaPrimitiveNode(
+        schemaElement.getName(),
+        convertEnum(RepetitionType.class, schemaElement.getRepetition_type()),
+        new NoLogicalType(),
+        convertEnum(ParquetType.class, schemaElement.getType()),
+        schemaElement.getType_length(),
+        fieldId);
+  }
+
+  private static <T extends Enum<T>, S extends Enum<S>> T convertEnum(Class<T> enumClass, S thriftEnum) {
+
+    return Enum.valueOf(enumClass, thriftEnum.name());
   }
 
   /**
@@ -308,7 +347,7 @@ public class SchemaPrimitiveNode extends SchemaNode {
     return typeLength;
   }
 
-  DecimalMetadata decimalMetadata() {
+  public DecimalMetadata decimalMetadata() {
     return decimalMetadata;
   }
 
@@ -355,12 +394,46 @@ public class SchemaPrimitiveNode extends SchemaNode {
   }
 
   @Override
-  public void toParquet(Object element) {
+  public org.apache.parquet.format.SchemaElement toParquet() {
 
-    // todo
+    org.apache.parquet.format.SchemaElement element = new org.apache.parquet.format.SchemaElement();
 
+    element.setName(name);
+    element.setRepetition_type(convertEnum(org.apache.parquet.format.FieldRepetitionType.class, repetition));
+    element.setType(convertEnum(org.apache.parquet.format.Type.class, physicalType));
+
+    if (physicalType == ParquetType.FIXED_LEN_BYTE_ARRAY) {
+      element.setType_length(typeLength);
+    }
+
+    if (decimalMetadata.isSet()) {
+      element.setPrecision(decimalMetadata.precision());
+      element.setScale(decimalMetadata.scale());
+    }
+
+    // TODO: Remove the guard on isInterval() to enable IntervalTypes after parquet.thrift recognizes them
+    if (logicalType != null && logicalType.isSerialized() && !logicalType.isInterval()) {
+      element.setLogicalType(logicalType.toThrift());
+    }
+
+    if (convertedType != ConvertedType.NONE && convertedType != ConvertedType.NA) {
+      element.setConverted_type(convertEnum(org.apache.parquet.format.ConvertedType.class, convertedType));
+    }
+
+    if (convertedType == ConvertedType.NA) {
+      // ConvertedType::NA is an unreleased, obsolete synonym for LogicalType::Null.
+      // Never emit it (see PARQUET-1990 for discussion).
+      if (logicalType == null || !logicalType.isNull()) {
+        throw new ParquetException("ConvertedType::NA is obsolete, please use LogicalType::Null instead");
+      }
+    }
+
+    if (fieldId >= 0) {
+      element.setField_id(fieldId);
+    }
+
+    return element;
   }
 
   // TODO: Visitors
-
 }

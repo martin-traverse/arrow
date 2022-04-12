@@ -97,10 +97,12 @@ public abstract class SchemaNode {
     return logicalType;
   }
 
-  /// \brief The field_id value for the serialized SchemaElement. If the
-  /// field_id is less than 0 (e.g. -1), it will not be set when serialized to
-  /// Thrift.
-  int fieldId() {
+  /**
+   * The field_id value for the serialized SchemaElement.
+   *
+   * If the field_id is less than 0 (e.g. -1), it will not be set when serialized to Thrift.
+   */
+  public int fieldId() {
     return fieldId;
   }
 
@@ -159,7 +161,7 @@ public abstract class SchemaNode {
     return ColumnPath.fromNode(this);
   }
 
-  public abstract void toParquet(Object element);
+  public abstract org.apache.parquet.format.SchemaElement toParquet();
 
   protected boolean equalsInternal(SchemaNode other) {
 
