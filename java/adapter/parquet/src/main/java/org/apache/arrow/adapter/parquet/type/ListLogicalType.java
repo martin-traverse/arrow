@@ -34,5 +34,12 @@ public class ListLogicalType extends LogicalType {
     return "List";
   }
 
-  // TODO: toThrift
+  @Override
+  public org.apache.parquet.format.LogicalType toThrift() {
+
+    org.apache.parquet.format.LogicalType type = new org.apache.parquet.format.LogicalType();
+    org.apache.parquet.format.ListType subType = new org.apache.parquet.format.ListType();
+    type.setLIST(subType);
+    return type;
+  }
 }

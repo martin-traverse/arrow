@@ -17,6 +17,8 @@
 
 package org.apache.arrow.adapter.parquet.type;
 
+import org.apache.arrow.adapter.parquet.ParquetException;
+
 
 /** Logical type class for interval type. */
 public class IntervalLogicalType extends LogicalType {
@@ -34,6 +36,12 @@ public class IntervalLogicalType extends LogicalType {
     return "Interval";
   }
 
-  // TODO: Thrift
-  // requires that parquet.thrift recognizes IntervalType as a ConvertedType
+  @Override
+  public org.apache.parquet.format.LogicalType toThrift() {
+
+    // TODO: Support Thrift for intervals
+    // requires that parquet.thrift recognizes IntervalType
+
+    throw new ParquetException("Serialization for logical type " + this + " is not available yet");
+  }
 }

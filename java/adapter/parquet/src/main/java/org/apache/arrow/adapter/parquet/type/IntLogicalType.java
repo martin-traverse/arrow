@@ -149,16 +149,17 @@ public class IntLogicalType extends LogicalType {
     return "{\"Type\": \"Int\", \"bitWidth\": " + width + ", \"isSigned\": " + signed + "}";
   }
 
-  // TODO: toThrift
+  @Override
+  public org.apache.parquet.format.LogicalType toThrift() {
 
-  //    format::LogicalType LogicalType::Impl::Int::ToThrift() const {
-  //        format::LogicalType type;
-  //        format::IntType int_type;
-  //        DCHECK(width_ == 64 || width_ == 32 || width_ == 16 || width_ == 8);
-  //        int_type.__set_bitWidth(static_cast<int8_t>(width_));
-  //        int_type.__set_isSigned(signed_);
-  //        type.__set_INTEGER(int_type);
-  //        return type;
-  //    }
+    org.apache.parquet.format.LogicalType type = new org.apache.parquet.format.LogicalType();
+    org.apache.parquet.format.IntType intType = new org.apache.parquet.format.IntType();
 
+    intType.setBitWidth((byte) width);
+    intType.setIsSigned(signed);
+    type.setINTEGER(intType);
+
+    return type;
+
+  }
 }

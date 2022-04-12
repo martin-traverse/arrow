@@ -34,5 +34,12 @@ public class UuidLogicalType extends LogicalType {
     return "UUID";
   }
 
-  // TODO: toThrift
+  @Override
+  public org.apache.parquet.format.LogicalType toThrift() {
+
+    org.apache.parquet.format.LogicalType type = new org.apache.parquet.format.LogicalType();
+    org.apache.parquet.format.UUIDType subType = new org.apache.parquet.format.UUIDType();
+    type.setUUID(subType);
+    return type;
+  }
 }

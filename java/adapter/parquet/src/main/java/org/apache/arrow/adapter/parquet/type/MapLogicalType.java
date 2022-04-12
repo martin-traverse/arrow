@@ -34,7 +34,14 @@ public class MapLogicalType extends LogicalType {
     return "Map";
   }
 
-  // TODO: toThrift
+  @Override
+  public org.apache.parquet.format.LogicalType toThrift() {
+
+    org.apache.parquet.format.LogicalType type = new org.apache.parquet.format.LogicalType();
+    org.apache.parquet.format.MapType subType = new org.apache.parquet.format.MapType();
+    type.setMAP(subType);
+    return type;
+  }
 
   @Override
   public boolean isCompatible(ConvertedType convertedType, DecimalMetadata convertedDecimalMetadata) {

@@ -97,8 +97,8 @@ public abstract class LogicalType {
   private final Compatability compatability;
   private final Applicability applicability;
   private final ConvertedType convertedType;
-  private final ParquetType primitiveType;
-  private final int primitiveLength;
+  private final ParquetType physicalType;
+  private final int physicalLength;
 
 
   protected LogicalType(Type type, SortOrder order) {
@@ -125,9 +125,9 @@ public abstract class LogicalType {
   protected LogicalType(
       Type type, SortOrder order,
       Compatability compatability, Applicability applicability,
-      ConvertedType convertedType, ParquetType primitiveType) {
+      ConvertedType convertedType, ParquetType physicalType) {
 
-    this(type, order, compatability, applicability, convertedType, primitiveType, -1);
+    this(type, order, compatability, applicability, convertedType, physicalType, -1);
   }
 
   protected LogicalType(
@@ -141,15 +141,15 @@ public abstract class LogicalType {
   protected LogicalType(
       Type type, SortOrder order,
       Compatability compatability, Applicability applicability,
-      ParquetType primitiveType, int primitiveLength) {
+      ParquetType physicalType, int physicalLength) {
 
-    this(type, order, compatability, applicability, ConvertedType.NONE, primitiveType, primitiveLength);
+    this(type, order, compatability, applicability, ConvertedType.NONE, physicalType, physicalLength);
   }
 
   protected LogicalType(
       Type type, SortOrder order,
       Compatability compatability, Applicability applicability,
-      ConvertedType convertedType, ParquetType primitiveType, int primitiveLength) {
+      ConvertedType convertedType, ParquetType physicalType, int physicalLength) {
 
     this.type = type;
     this.order = order;
@@ -157,8 +157,8 @@ public abstract class LogicalType {
     this.compatability = compatability;
     this.applicability = applicability;
     this.convertedType = convertedType;
-    this.primitiveType = primitiveType;
-    this.primitiveLength = primitiveLength;
+    this.physicalType = physicalType;
+    this.physicalLength = physicalLength;
 
     if (compatability == Compatability.SIMPLE_COMPATIBLE) {
       if (convertedType == ConvertedType.UNDEFINED || convertedType == ConvertedType.NA) {
@@ -167,13 +167,13 @@ public abstract class LogicalType {
     }
 
     if (applicability == Applicability.SIMPLE_APPLICABLE) {
-      if (primitiveType == ParquetType.UNDEFINED) {
+      if (physicalType == ParquetType.UNDEFINED) {
         throw new ParquetException("Primitive (Parquet) type is required for simple applicability");
       }
     }
 
     if (applicability == Applicability.TYPE_LENGTH_APPLICABLE) {
-      if (primitiveType == ParquetType.UNDEFINED || primitiveLength < 0) {
+      if (physicalType == ParquetType.UNDEFINED || physicalLength < 0) {
         throw new ParquetException("Primitive (Parquet) type and length are required for type length applicability");
       }
     }
@@ -196,13 +196,13 @@ public abstract class LogicalType {
 
     LogicalType that = (LogicalType) o;
 
-    if (primitiveLength != that.primitiveLength) { return false; }
+    if (physicalLength != that.physicalLength) { return false; }
     if (type != that.type) { return false; }
     if (order != that.order) { return false; }
     if (compatability != that.compatability) { return false; }
     if (applicability != that.applicability) { return false; }
     if (convertedType != that.convertedType) { return false; }
-    return primitiveType == that.primitiveType;
+    return physicalType == that.physicalType;
   }
 
   @Override
@@ -212,8 +212,8 @@ public abstract class LogicalType {
     result = 31 * result + (compatability != null ? compatability.hashCode() : 0);
     result = 31 * result + (applicability != null ? applicability.hashCode() : 0);
     result = 31 * result + (convertedType != null ? convertedType.hashCode() : 0);
-    result = 31 * result + (primitiveType != null ? primitiveType.hashCode() : 0);
-    result = 31 * result + primitiveLength;
+    result = 31 * result + (physicalType != null ? physicalType.hashCode() : 0);
+    result = 31 * result + physicalLength;
     return result;
   }
 
@@ -296,13 +296,65 @@ public abstract class LogicalType {
     }
   }
 
-  // TODO: Thrift
-  // CPP type is format::LogicalType, in parquet_types.h under src/generated
+  /** Return the logical type represented by the Thrift intermediary object. */
+  public static LogicalType fromThrift(org.apache.parquet.format.LogicalType thriftType) {
 
-  // /** Return the logical type represented by the Thrift intermediary object. */
-  // public static LogicalType fromThrift(ThriftLogicalType thrift_logical_type) {
-  //
-  // }
+    if (thriftType.isSetSTRING()) {
+      return new StringLogicalType();
+    } else if (thriftType.isSetMAP()) {
+      return new MapLogicalType();
+    } else if (thriftType.isSetLIST()) {
+      return new ListLogicalType();
+    } else if (thriftType.isSetENUM()) {
+      return new EnumLogicalType();
+    } else if (thriftType.isSetDECIMAL()) {
+      return new DecimalLogicalType(thriftType.getDECIMAL().getPrecision(), thriftType.getDECIMAL().getScale());
+    } else if (thriftType.isSetDATE()) {
+      return new DateLogicalType();
+    } else if (thriftType.isSetTIME()) {
+      TimeUnit unit;
+      if (thriftType.getTIME().getUnit().isSetMILLIS()) {
+        unit = TimeUnit.MILLIS;
+      } else if (thriftType.getTIME().getUnit().isSetMICROS()) {
+        unit = TimeUnit.MICROS;
+      } else if (thriftType.getTIME().getUnit().isSetNANOS()) {
+        unit = TimeUnit.NANOS;
+      } else {
+        unit = TimeUnit.UNKNOWN;
+      }
+      return new TimeLogicalType(thriftType.getTIME().isIsAdjustedToUTC(), unit);
+    } else if (thriftType.isSetTIMESTAMP()) {
+      TimeUnit unit;
+      if (thriftType.getTIMESTAMP().getUnit().isSetMILLIS()) {
+        unit = TimeUnit.MILLIS;
+      } else if (thriftType.getTIMESTAMP().getUnit().isSetMICROS()) {
+        unit = TimeUnit.MICROS;
+      } else if (thriftType.getTIMESTAMP().getUnit().isSetNANOS()) {
+        unit = TimeUnit.NANOS;
+      } else {
+        unit = TimeUnit.UNKNOWN;
+      }
+      return new TimestampLogicalType(thriftType.getTIMESTAMP().isAdjustedToUTC, unit, false, false);
+
+      // TODO(tpboudreau): activate the commented code after parquet.thrift
+      // recognizes IntervalType as a LogicalType
+      //} else if (thriftType.isSetINTERVAL()) {
+      //  return new IntervalLogicalType();
+
+    } else if (thriftType.isSetINTEGER()) {
+      return new IntLogicalType(thriftType.getINTEGER().bitWidth, thriftType.getINTEGER().isSigned);
+    } else if (thriftType.isSetUNKNOWN()) {
+      return new NullLogicalType();
+    } else if (thriftType.isSetJSON()) {
+      return new JsonLogicalType();
+    } else if (thriftType.isSetBSON()) {
+      return new BsonLogicalType();
+    } else if (thriftType.isSetUUID()) {
+      return new UuidLogicalType();
+    } else {
+      throw new ParquetException("Metadata contains Thrift LogicalType that is not recognized");
+    }
+  }
   
   public static LogicalType string() {
     return new StringLogicalType();
@@ -396,10 +448,10 @@ public abstract class LogicalType {
     switch (applicability) {
 
       case SIMPLE_APPLICABLE:
-        return primitiveType == this.primitiveType;
+        return primitiveType == this.physicalType;
 
       case TYPE_LENGTH_APPLICABLE:
-        return primitiveType == this.primitiveType && primitiveLength == this.primitiveLength;
+        return primitiveType == this.physicalType && primitiveLength == this.physicalLength;
 
       case UNIVERSAL_APPLICABLE:
         return true;
@@ -458,24 +510,23 @@ public abstract class LogicalType {
   }
 
   /** Return a printable representation of this logical type. */
+  // Must be implemented by all concrete logical types.
   @Override
   public abstract String toString();
 
+  /** Return a serializable Thrift object for this logical type. */
+  // Must be implemented by all concrete logical types.
+  // Types not supporting serialization should throw ParquetException.
+  public abstract org.apache.parquet.format.LogicalType toThrift();
+
   /** Return a JSON representation of this logical type. */
+  // Default implementation can be used by simple types.
   public String toJson() {
 
     return "{\"Type\": \"" +
         this +
         "}";
-
   }
-
-  // TODO: Thrift
-
-  /// \brief Return a serializable Thrift object for this logical type.
-  //    public Format.LogicalType toThrift() {
-  //
-  //    }
 
   public boolean isString() {
     return type == Type.STRING;

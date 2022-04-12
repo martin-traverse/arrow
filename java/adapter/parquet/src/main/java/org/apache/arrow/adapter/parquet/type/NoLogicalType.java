@@ -18,6 +18,8 @@
 package org.apache.arrow.adapter.parquet.type;
 
 
+import org.apache.arrow.adapter.parquet.ParquetException;
+
 /** Logical type class for objects with no type (explicit "none" type, which is different from undefined). */
 public class NoLogicalType extends LogicalType {
 
@@ -32,5 +34,12 @@ public class NoLogicalType extends LogicalType {
   @Override
   public String toString() {
     return "None";
+  }
+
+  @Override
+  public org.apache.parquet.format.LogicalType toThrift() {
+
+    // Thrift conversion is not available for NoLogicalType
+    throw new ParquetException("Logical type " + this + " should not be serialized");
   }
 }

@@ -34,5 +34,12 @@ public class StringLogicalType extends LogicalType {
     return "String";
   }
 
-  // TODO: toThrift
+  @Override
+  public org.apache.parquet.format.LogicalType toThrift() {
+
+    org.apache.parquet.format.LogicalType type = new org.apache.parquet.format.LogicalType();
+    org.apache.parquet.format.StringType subType = new org.apache.parquet.format.StringType();
+    type.setSTRING(subType);
+    return type;
+  }
 }

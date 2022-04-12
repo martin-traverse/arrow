@@ -33,5 +33,12 @@ public class EnumLogicalType extends LogicalType {
     return "Enum";
   }
 
-  // TODO: toThrift
+  @Override
+  public org.apache.parquet.format.LogicalType toThrift() {
+
+    org.apache.parquet.format.LogicalType type = new org.apache.parquet.format.LogicalType();
+    org.apache.parquet.format.EnumType subType = new org.apache.parquet.format.EnumType();
+    type.setENUM(subType);
+    return type;
+  }
 }

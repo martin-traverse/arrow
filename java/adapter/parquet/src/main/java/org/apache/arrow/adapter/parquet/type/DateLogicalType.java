@@ -34,5 +34,12 @@ public class DateLogicalType extends LogicalType {
     return "Date";
   }
 
-  // TODO: Thrift
+  @Override
+  public org.apache.parquet.format.LogicalType toThrift() {
+
+    org.apache.parquet.format.LogicalType type = new org.apache.parquet.format.LogicalType();
+    org.apache.parquet.format.DateType subType = new org.apache.parquet.format.DateType();
+    type.setDATE(subType);
+    return type;
+  }
 }

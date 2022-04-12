@@ -18,6 +18,8 @@
 package org.apache.arrow.adapter.parquet.type;
 
 
+import org.apache.arrow.adapter.parquet.ParquetException;
+
 /** Logical type class for undefined types. */
 public class UndefinedLogicalType extends LogicalType {
 
@@ -32,5 +34,12 @@ public class UndefinedLogicalType extends LogicalType {
   @Override
   public String toString() {
     return "Undefined";
+  }
+
+  @Override
+  public org.apache.parquet.format.LogicalType toThrift() {
+
+    // Thrift conversion is not available for UndefinedLogicalType
+    throw new ParquetException("Logical type " + this + " should not be serialized");
   }
 }

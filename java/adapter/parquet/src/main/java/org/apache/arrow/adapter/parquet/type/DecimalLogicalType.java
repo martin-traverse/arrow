@@ -84,9 +84,8 @@ public class DecimalLogicalType extends LogicalType {
 
       case INT64:
         ok = (1 <= precision) && (precision <= 18);
-        if (precision < 10) {
-          // FIXME(tpb): warn that INT32 could be used
-        }
+        // FIXME(tpb): warn that INT32 could be used
+        // if precision < 10, issue warning
         break;
 
       case FIXED_LEN_BYTE_ARRAY:
@@ -132,7 +131,14 @@ public class DecimalLogicalType extends LogicalType {
     return "{\"Type\": \"Decimal\", \"precision\": " + precision + ", \"scale\": " + scale + "}";
   }
 
-  // TODO: Thrift
-  // @Override
-  // format::LogicalType toThrift() {}
+  @Override
+  public org.apache.parquet.format.LogicalType toThrift() {
+
+    org.apache.parquet.format.LogicalType type = new org.apache.parquet.format.LogicalType();
+    org.apache.parquet.format.DecimalType decimalType = new org.apache.parquet.format.DecimalType();
+    decimalType.setPrecision(precision);
+    decimalType.setScale(scale);
+    type.setDECIMAL(decimalType);
+    return type;
+  }
 }

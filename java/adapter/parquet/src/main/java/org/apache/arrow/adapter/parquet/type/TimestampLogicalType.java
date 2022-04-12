@@ -23,39 +23,40 @@ import org.apache.arrow.adapter.parquet.ParquetException;
 /** Logical type class for timestamp types. */
 public class TimestampLogicalType extends LogicalType {
 
-  private final boolean adjusted;
-  private final TimeUnit timeUnit;
+  private final boolean isAdjustedToUtc;
+  private final TimeUnit unit;
+
   private final boolean isFromConvertedType;
   private final boolean forceSetConvertedType;
 
   /** Logical type class for int types. */
   public TimestampLogicalType(
-      boolean isAdjustedToUtc, TimeUnit timeUnit,
+      boolean isAdjustedToUtc, TimeUnit unit,
       boolean isFromConvertedType, boolean forceSetConvertedType) {
 
     super(Type.TIMESTAMP, SortOrder.SIGNED,
         Compatability.CUSTOM_COMPATIBILITY, Applicability.SIMPLE_APPLICABLE,
         ParquetType.INT64);
 
-    if (timeUnit != TimeUnit.MILLIS &&
-        timeUnit != TimeUnit.MICROS &&
-        timeUnit != TimeUnit.NANOS) {
+    if (unit != TimeUnit.MILLIS &&
+        unit != TimeUnit.MICROS &&
+        unit != TimeUnit.NANOS) {
 
       throw new ParquetException("TimeUnit must be one of MILLIS, MICROS, or NANOS for Timestamp logical type");
     }
 
-    this.adjusted = isAdjustedToUtc;
-    this.timeUnit = timeUnit;
+    this.isAdjustedToUtc = isAdjustedToUtc;
+    this.unit = unit;
     this.isFromConvertedType = isFromConvertedType;
     this.forceSetConvertedType = forceSetConvertedType;
   }
 
   public boolean isAdjustedToUtc() {
-    return adjusted;
+    return isAdjustedToUtc;
   }
 
   public TimeUnit timeUnit() {
-    return timeUnit;
+    return unit;
   }
 
   public boolean isFromConvertedType() {
@@ -74,17 +75,17 @@ public class TimestampLogicalType extends LogicalType {
 
     TimestampLogicalType that = (TimestampLogicalType) o;
 
-    if (adjusted != that.adjusted) { return false; }
+    if (isAdjustedToUtc != that.isAdjustedToUtc) { return false; }
     if (isFromConvertedType != that.isFromConvertedType) { return false; }
     if (forceSetConvertedType != that.forceSetConvertedType) { return false; }
-    return timeUnit == that.timeUnit;
+    return unit == that.unit;
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + (adjusted ? 1 : 0);
-    result = 31 * result + (timeUnit != null ? timeUnit.hashCode() : 0);
+    result = 31 * result + (isAdjustedToUtc ? 1 : 0);
+    result = 31 * result + (unit != null ? unit.hashCode() : 0);
     result = 31 * result + (isFromConvertedType ? 1 : 0);
     result = 31 * result + (forceSetConvertedType ? 1 : 0);
     return result;
@@ -100,14 +101,14 @@ public class TimestampLogicalType extends LogicalType {
 
     if (convertedDecimalMetadata.isSet()) {
       return false;
-    } else if (timeUnit == TimeUnit.MILLIS) {
-      if (adjusted || forceSetConvertedType) {
+    } else if (unit == TimeUnit.MILLIS) {
+      if (isAdjustedToUtc || forceSetConvertedType) {
         return convertedType == ConvertedType.TIMESTAMP_MILLIS;
       } else {
         return (convertedType == ConvertedType.NONE) || (convertedType == ConvertedType.NA);
       }
-    } else if (timeUnit == TimeUnit.MICROS) {
-      if (adjusted || forceSetConvertedType) {
+    } else if (unit == TimeUnit.MICROS) {
+      if (isAdjustedToUtc || forceSetConvertedType) {
         return convertedType == ConvertedType.TIMESTAMP_MICROS;
       } else {
         return (convertedType == ConvertedType.NONE) || (convertedType == ConvertedType.NA);
@@ -122,10 +123,10 @@ public class TimestampLogicalType extends LogicalType {
 
     outDecimalMetadata.reset();
 
-    if (adjusted || forceSetConvertedType) {
-      if (timeUnit == TimeUnit.MILLIS) {
+    if (isAdjustedToUtc || forceSetConvertedType) {
+      if (unit == TimeUnit.MILLIS) {
         return ConvertedType.TIMESTAMP_MILLIS;
-      } else if (timeUnit == TimeUnit.MICROS) {
+      } else if (unit == TimeUnit.MICROS) {
         return ConvertedType.TIMESTAMP_MICROS;
       }
     }
@@ -137,8 +138,8 @@ public class TimestampLogicalType extends LogicalType {
   @Override
   public String toString() {
 
-    return "Timestamp(isAdjustedToUTC=" + adjusted +
-        ", timeUnit=" + timeUnit.displayName() +
+    return "Timestamp(isAdjustedToUTC=" + isAdjustedToUtc +
+        ", timeUnit=" + unit.displayName() +
         ", is_from_converted_type=" + isFromConvertedType +
         ", force_set_converted_type=" + forceSetConvertedType + ")";
   }
@@ -146,12 +147,31 @@ public class TimestampLogicalType extends LogicalType {
   @Override
   public String toJson() {
 
-    return "{\"Type\": \"Timestamp\", \"isAdjustedToUTC\": " + adjusted +
-        ", \"timeUnit\": \"" + timeUnit.displayName() + "\"" +
+    return "{\"Type\": \"Timestamp\", \"isAdjustedToUTC\": " + isAdjustedToUtc +
+        ", \"timeUnit\": \"" + unit.displayName() + "\"" +
         ", \"is_from_converted_type\": " + isFromConvertedType +
         ", \"force_set_converted_type\": " + forceSetConvertedType + "}";
   }
 
-  // TODO: Thrift
-  // format::LogicalType ToThrift() const override;
+  @Override
+  public org.apache.parquet.format.LogicalType toThrift() {
+
+    org.apache.parquet.format.LogicalType type = new org.apache.parquet.format.LogicalType();
+    org.apache.parquet.format.TimestampType timestampType = new org.apache.parquet.format.TimestampType();
+    org.apache.parquet.format.TimeUnit timeUnit = new org.apache.parquet.format.TimeUnit();
+
+    if (this.unit == TimeUnit.MILLIS) {
+      timeUnit.setMILLIS(new org.apache.parquet.format.MilliSeconds());
+    } else if (this.unit == TimeUnit.MICROS) {
+      timeUnit.setMICROS(new org.apache.parquet.format.MicroSeconds());
+    } else if (this.unit == TimeUnit.NANOS) {
+      timeUnit.setNANOS(new org.apache.parquet.format.NanoSeconds());
+    }
+
+    timestampType.setIsAdjustedToUTC(isAdjustedToUtc);
+    timestampType.setUnit(timeUnit);
+    type.setTIMESTAMP(timestampType);
+
+    return type;
+  }
 }

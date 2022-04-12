@@ -34,5 +34,12 @@ public class BsonLogicalType extends LogicalType {
     return "BSON";
   }
 
-  // TODO: toThrift
+  @Override
+  public org.apache.parquet.format.LogicalType toThrift() {
+
+    org.apache.parquet.format.LogicalType type = new org.apache.parquet.format.LogicalType();
+    org.apache.parquet.format.BsonType subType = new org.apache.parquet.format.BsonType();
+    type.setBSON(subType);
+    return type;
+  }
 }

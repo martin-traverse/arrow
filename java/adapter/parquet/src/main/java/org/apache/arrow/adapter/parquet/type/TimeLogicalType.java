@@ -24,31 +24,31 @@ import org.apache.arrow.adapter.parquet.ParquetException;
 /** Logical type class for time type. */
 public class TimeLogicalType extends LogicalType {
 
-  private final boolean adjusted;
-  private final TimeUnit timeUnit;
+  private final boolean isAdjustedToUtc;
+  private final TimeUnit unit;
 
   /** Logical type class for time type. */
-  public TimeLogicalType(boolean adjusted, TimeUnit timeUnit) {
+  public TimeLogicalType(boolean isAdjustedToUtc, TimeUnit unit) {
 
     super(Type.TIME, SortOrder.SIGNED);
 
-    if (timeUnit != TimeUnit.MILLIS &&
-        timeUnit != TimeUnit.MICROS &&
-        timeUnit != TimeUnit.NANOS) {
+    if (unit != TimeUnit.MILLIS &&
+        unit != TimeUnit.MICROS &&
+        unit != TimeUnit.NANOS) {
 
       throw new ParquetException("TimeUnit must be one of MILLIS, MICROS, or NANOS for Time logical type");
     }
 
-    this.adjusted = adjusted;
-    this.timeUnit = timeUnit;
+    this.isAdjustedToUtc = isAdjustedToUtc;
+    this.unit = unit;
   }
 
   public boolean isAdjustedToUtc() {
-    return adjusted;
+    return isAdjustedToUtc;
   }
 
   LogicalType.TimeUnit timeUnit() {
-    return timeUnit;
+    return unit;
   }
 
   @Override
@@ -59,23 +59,23 @@ public class TimeLogicalType extends LogicalType {
 
     TimeLogicalType that = (TimeLogicalType) o;
 
-    if (adjusted != that.adjusted) { return false; }
-    return timeUnit == that.timeUnit;
+    if (isAdjustedToUtc != that.isAdjustedToUtc) { return false; }
+    return unit == that.unit;
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + (adjusted ? 1 : 0);
-    result = 31 * result + (timeUnit != null ? timeUnit.hashCode() : 0);
+    result = 31 * result + (isAdjustedToUtc ? 1 : 0);
+    result = 31 * result + (unit != null ? unit.hashCode() : 0);
     return result;
   }
 
   @Override
   public boolean isApplicable(ParquetType primitiveType, int primitiveLength) {
 
-    return (primitiveType == ParquetType.INT32 && timeUnit == TimeUnit.MILLIS) ||
-        (primitiveType == ParquetType.INT64 && (timeUnit == TimeUnit.MICROS || timeUnit == TimeUnit.NANOS));
+    return (primitiveType == ParquetType.INT32 && unit == TimeUnit.MILLIS) ||
+        (primitiveType == ParquetType.INT64 && (unit == TimeUnit.MICROS || unit == TimeUnit.NANOS));
   }
 
   @Override
@@ -83,9 +83,9 @@ public class TimeLogicalType extends LogicalType {
 
     if (convertedDecimalMetadata.isSet()) {
       return false;
-    } else if (adjusted && timeUnit == TimeUnit.MILLIS) {
+    } else if (isAdjustedToUtc && unit == TimeUnit.MILLIS) {
       return convertedType == ConvertedType.TIME_MILLIS;
-    } else if (adjusted && timeUnit == TimeUnit.MICROS) {
+    } else if (isAdjustedToUtc && unit == TimeUnit.MICROS) {
       return convertedType == ConvertedType.TIME_MICROS;
     } else {
       return (convertedType == ConvertedType.NONE) || (convertedType == ConvertedType.NA);
@@ -97,10 +97,10 @@ public class TimeLogicalType extends LogicalType {
 
     outDecimalMetadata.reset();
 
-    if (adjusted) {
-      if (timeUnit == TimeUnit.MILLIS) {
+    if (isAdjustedToUtc) {
+      if (unit == TimeUnit.MILLIS) {
         return ConvertedType.TIME_MILLIS;
-      } else if (timeUnit == TimeUnit.MICROS) {
+      } else if (unit == TimeUnit.MICROS) {
         return ConvertedType.TIME_MICROS;
       }
     }
@@ -111,18 +111,38 @@ public class TimeLogicalType extends LogicalType {
   @Override
   public String toString() {
 
-    return "Time(isAdjustedToUTC=" + adjusted +
-        ", timeUnit=" + timeUnit.displayName() +
+    return "Time(isAdjustedToUTC=" + isAdjustedToUtc +
+        ", timeUnit=" + unit.displayName() +
         ")";
   }
 
   @Override
   public String toJson() {
 
-    return "{\"Type\": \"Time\", \"isAdjustedToUTC\": " + adjusted +
-        ", \"timeUnit\": \"" + timeUnit.displayName() +
+    return "{\"Type\": \"Time\", \"isAdjustedToUTC\": " + isAdjustedToUtc +
+        ", \"timeUnit\": \"" + unit.displayName() +
         "\"}";
   }
 
-  // TODO: Thrift
+  @Override
+  public org.apache.parquet.format.LogicalType toThrift() {
+
+    org.apache.parquet.format.LogicalType type = new org.apache.parquet.format.LogicalType();
+    org.apache.parquet.format.TimeType timeType = new org.apache.parquet.format.TimeType();
+    org.apache.parquet.format.TimeUnit timeUnit = new org.apache.parquet.format.TimeUnit();
+
+    if (this.unit == LogicalType.TimeUnit.MILLIS) {
+      timeUnit.setMILLIS(new org.apache.parquet.format.MilliSeconds());
+    } else if (this.unit == LogicalType.TimeUnit.MICROS) {
+      timeUnit.setMICROS(new org.apache.parquet.format.MicroSeconds());
+    } else if (this.unit == LogicalType.TimeUnit.NANOS) {
+      timeUnit.setNANOS(new org.apache.parquet.format.NanoSeconds());
+    }
+
+    timeType.setIsAdjustedToUTC(isAdjustedToUtc);
+    timeType.setUnit(timeUnit);
+    type.setTIME(timeType);
+
+    return type;
+  }
 }

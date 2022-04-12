@@ -34,5 +34,12 @@ public class JsonLogicalType extends LogicalType {
     return "JSON";
   }
 
-  // TODO: toThrift
+  @Override
+  public org.apache.parquet.format.LogicalType toThrift() {
+
+    org.apache.parquet.format.LogicalType type = new org.apache.parquet.format.LogicalType();
+    org.apache.parquet.format.JsonType subType = new org.apache.parquet.format.JsonType();
+    type.setJSON(subType);
+    return type;
+  }
 }
