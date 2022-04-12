@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.apache.arrow.adapter.parquet;
+package org.apache.arrow.adapter.parquet;
 
 import org.apache.parquet.format.FieldRepetitionType;
 import org.apache.parquet.format.SchemaElement;

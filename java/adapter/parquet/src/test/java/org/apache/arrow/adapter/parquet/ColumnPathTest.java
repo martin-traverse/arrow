@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.apache.arrow.adapter.parquet;
+package org.apache.arrow.adapter.parquet;
 
 import java.util.Arrays;
 

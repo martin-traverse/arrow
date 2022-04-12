@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-package com.apache.arrow.adapter.parquet;
+package org.apache.arrow.adapter.parquet;
 
-import static com.apache.arrow.adapter.parquet.SchemaTestHelpers.newPrimitive;
+import static org.apache.arrow.adapter.parquet.SchemaTestHelpers.newPrimitive;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -25,9 +25,6 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.apache.arrow.adapter.parquet.ParquetException;
-import org.apache.arrow.adapter.parquet.SchemaNode;
-import org.apache.arrow.adapter.parquet.SchemaPrimitiveNode;
 import org.apache.arrow.adapter.parquet.type.ConvertedType;
 import org.apache.arrow.adapter.parquet.type.ParquetType;
 import org.apache.arrow.adapter.parquet.type.RepetitionType;
