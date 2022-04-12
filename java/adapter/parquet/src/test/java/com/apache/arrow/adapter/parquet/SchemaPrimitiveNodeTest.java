@@ -17,6 +17,7 @@
 
 package com.apache.arrow.adapter.parquet;
 
+import static com.apache.arrow.adapter.parquet.SchemaTestHelpers.newPrimitive;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -285,22 +286,5 @@ public class SchemaPrimitiveNodeTest {
         new SchemaPrimitiveNode(
             "foo", RepetitionType.REQUIRED,
             ParquetType.FIXED_LEN_BYTE_ARRAY, ConvertedType.INTERVAL, 10));
-  }
-
-  private static org.apache.parquet.format.SchemaElement newPrimitive(
-      String name, org.apache.parquet.format.FieldRepetitionType repetition,
-      org.apache.parquet.format.Type type, int fieldId) {
-
-    org.apache.parquet.format.SchemaElement result = new org.apache.parquet.format.SchemaElement();
-
-    result.setName(name);
-    result.setRepetition_type(repetition);
-    result.setType(type);
-
-    if (fieldId >= 0) {
-      result.setField_id(fieldId);
-    }
-
-    return result;
   }
 }

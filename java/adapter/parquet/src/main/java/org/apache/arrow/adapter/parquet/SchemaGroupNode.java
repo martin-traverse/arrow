@@ -78,6 +78,14 @@ public class SchemaGroupNode extends SchemaNode {
   /** Create a schema group node from a logical type. */
   public SchemaGroupNode(
       String name, RepetitionType repetition, List<SchemaNode> fields,
+      LogicalType logicalType) {
+
+    this(name, repetition, fields, logicalType, -1);
+  }
+
+  /** Create a schema group node from a logical type. */
+  public SchemaGroupNode(
+      String name, RepetitionType repetition, List<SchemaNode> fields,
       LogicalType logicalType, int fieldId) {
 
     super(
@@ -282,6 +290,4 @@ public class SchemaGroupNode extends SchemaNode {
 
     return Enum.valueOf(enumClass, thriftEnum.name());
   }
-
-  // TODO: Visitors
 }

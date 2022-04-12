@@ -158,7 +158,29 @@ public abstract class SchemaNode {
   }
 
   /** Produce a Thrift SchemaElement for this schema node. */
-  public abstract org.apache.parquet.format.SchemaElement toParquet();
+  public abstract SchemaElement toParquet();
+
+  /** Convert a group node into a flat list of Thrift schema elements. */
+  // In CPP this is implemented with visitors
+  public static List<SchemaElement> flatten(SchemaGroupNode group) {
+
+    return flatten(group, new ArrayList<>());
+  }
+
+  private static List<SchemaElement> flatten(SchemaNode node, List<SchemaElement> elements) {
+
+    SchemaElement element = node.toParquet();
+    elements.add(element);
+
+    if (node.isGroup()) {
+      SchemaGroupNode groupNode = (SchemaGroupNode) node;
+      for (int i = 0; i < groupNode.fieldCount(); i++) {
+        flatten(groupNode.field(i), elements);
+      }
+    }
+
+    return elements;
+  }
 
   /** Convert a flat list of Thrift schema elements into a structured hierarchy of schema nodes. */
   public static SchemaNode unflatten(List<SchemaElement> elements) {

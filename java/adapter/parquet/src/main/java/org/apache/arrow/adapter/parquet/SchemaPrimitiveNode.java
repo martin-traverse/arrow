@@ -73,6 +73,18 @@ public class SchemaPrimitiveNode extends SchemaNode {
    * Create a schema node from a logical type.
    *
    * If no logical type, pass LogicalType::None() or null.
+   */
+  public SchemaPrimitiveNode(
+      String name, RepetitionType repetition,
+      LogicalType logicalType, ParquetType physicalType, int physicalLength) {
+
+    this(name, repetition, logicalType, physicalType, physicalLength, /* fieldId = */ -1);
+  }
+
+  /**
+   * Create a schema node from a logical type.
+   *
+   * If no logical type, pass LogicalType::None() or null.
    * A fieldId -1 (or any negative value) will be serialized as null in Thrift.
    */
   public SchemaPrimitiveNode(
@@ -440,6 +452,4 @@ public class SchemaPrimitiveNode extends SchemaNode {
 
     return Enum.valueOf(enumClass, thriftEnum.name());
   }
-
-  // TODO: Visitors
 }

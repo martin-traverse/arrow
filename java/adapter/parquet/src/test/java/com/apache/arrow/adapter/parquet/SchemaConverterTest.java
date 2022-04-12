@@ -17,6 +17,8 @@
 
 package com.apache.arrow.adapter.parquet;
 
+import static com.apache.arrow.adapter.parquet.SchemaTestHelpers.newGroup;
+import static com.apache.arrow.adapter.parquet.SchemaTestHelpers.newPrimitive;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -44,34 +46,6 @@ import org.junit.jupiter.api.Test;
 public class SchemaConverterTest {
 
   String name = "parquet_schema";
-
-  static SchemaElement newPrimitive(String name, FieldRepetitionType repetition, Type type, int fieldId) {
-
-    SchemaElement result = new SchemaElement();
-    result.setName(name);
-    result.setRepetition_type(repetition);
-    result.setType(type);
-
-    if (fieldId >= 0) {
-      result.setField_id(fieldId);
-    }
-
-    return result;
-  }
-
-  static SchemaElement newGroup(String name, FieldRepetitionType repetition, int numChildren, int fieldId) {
-
-    SchemaElement result = new SchemaElement();
-    result.setName(name);
-    result.setRepetition_type(repetition);
-    result.setNum_children(numChildren);
-
-    if (fieldId >= 0) {
-      result.setField_id(fieldId);
-    }
-
-    return result;
-  }
 
   @Test
   void nestedExample() {
