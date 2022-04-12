@@ -24,6 +24,34 @@
     <name>Arrow Parquet Adapter</name>
     <description>(Contrib/Experimental) A library for converting Parquet data to/from Arrow data.</description>
 
+
+    <build>
+        <plugins>
+
+            <!-- Add the generated Thrift sources to the build -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>src/main/generated</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+
+
     <dependencies>
 
         <!-- https://mvnrepository.com/artifact/org.apache.arrow/arrow-memory-core -->
@@ -49,10 +77,31 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.thrift</groupId>
+            <artifactId>libthrift</artifactId>
+            <version>${dep.thrift.version}</version>
+
+            <!-- Do not pull in the Apache HTTP stack -->
+            <!-- We are using Thrift to read Parquet schemas, not to access or serve RPCs -->
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpclient</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpcore</artifactId>
+                </exclusion>
+            </exclusions>
+
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
             <version>${dep.avro.version}</version>
         </dependency>
+
     </dependencies>
 
     <packaging>jar</packaging>
