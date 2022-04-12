@@ -23,6 +23,7 @@ import org.apache.arrow.adapter.parquet.type.LogicalType;
 import org.apache.arrow.adapter.parquet.type.NoLogicalType;
 import org.apache.arrow.adapter.parquet.type.ParquetType;
 import org.apache.arrow.adapter.parquet.type.RepetitionType;
+import org.apache.parquet.format.SchemaElement;
 
 
 /**
@@ -40,45 +41,20 @@ public class SchemaPrimitiveNode extends SchemaNode {
   // Column order is mutable and not part of equals() or hashCode()
   private ColumnOrder columnOrder;
 
-
-  // Helpers for quickly constructing primitive nodes in code (mostly used for testing)
-
-  public static SchemaPrimitiveNode booleanNode(String name) {
-    return new SchemaPrimitiveNode(name, RepetitionType.OPTIONAL, ParquetType.BOOLEAN);
-  }
-
-  public static SchemaPrimitiveNode int32Node(String name) {
-    return new SchemaPrimitiveNode(name, RepetitionType.OPTIONAL, ParquetType.INT32);
-  }
-
-  public static SchemaPrimitiveNode int64Node(String name) {
-    return new SchemaPrimitiveNode(name, RepetitionType.OPTIONAL, ParquetType.INT64);
-  }
-
-  public static SchemaPrimitiveNode int96Node(String name) {
-    return new SchemaPrimitiveNode(name, RepetitionType.OPTIONAL, ParquetType.INT96);
-  }
-
-  public static SchemaPrimitiveNode floatNode(String name) {
-    return new SchemaPrimitiveNode(name, RepetitionType.OPTIONAL, ParquetType.FLOAT);
-  }
-
-  public static SchemaPrimitiveNode doubleNode(String name) {
-    return new SchemaPrimitiveNode(name, RepetitionType.OPTIONAL, ParquetType.DOUBLE);
-  }
-
-  public static SchemaPrimitiveNode byteArrayNode(String name) {
-    return new SchemaPrimitiveNode(name, RepetitionType.OPTIONAL, ParquetType.BYTE_ARRAY);
-  }
-
-
   /** Create a schema node with just the physical type. */
   public SchemaPrimitiveNode(
       String name, RepetitionType repetition,
       ParquetType physicalType) {
 
-    this(name, repetition, physicalType, ConvertedType.NONE,
-        /* length = */ -1, /* precision = */ -1, /* scale = */ -1, /* fieldId = */ -1);
+    this(name, repetition, new NoLogicalType(), physicalType, -1, -1);
+  }
+
+  /** Create a schema node with just the physical type. */
+  public SchemaPrimitiveNode(
+      String name, RepetitionType repetition,
+      ParquetType physicalType, int fieldId) {
+
+    this(name, repetition, new NoLogicalType(), physicalType, -1, fieldId);
   }
 
   /**
@@ -378,7 +354,7 @@ public class SchemaPrimitiveNode extends SchemaNode {
   }
 
   /** Create a primitive schema node from a Thrift schema element. */
-  public static SchemaNode fromParquet(org.apache.parquet.format.SchemaElement schemaElement) {
+  public static SchemaNode fromParquet(SchemaElement schemaElement) {
 
     int fieldId = schemaElement.isSetField_id() ? schemaElement.getField_id() : -1;
 
@@ -419,9 +395,9 @@ public class SchemaPrimitiveNode extends SchemaNode {
   }
 
   @Override
-  public org.apache.parquet.format.SchemaElement toParquet() {
+  public SchemaElement toParquet() {
 
-    org.apache.parquet.format.SchemaElement element = new org.apache.parquet.format.SchemaElement();
+    SchemaElement element = new SchemaElement();
 
     element.setName(name);
     element.setRepetition_type(convertEnum(org.apache.parquet.format.FieldRepetitionType.class, repetition));

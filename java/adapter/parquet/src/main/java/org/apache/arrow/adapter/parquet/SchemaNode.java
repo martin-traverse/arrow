@@ -17,11 +17,15 @@
 
 package org.apache.arrow.adapter.parquet;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 import org.apache.arrow.adapter.parquet.type.ConvertedType;
 import org.apache.arrow.adapter.parquet.type.LogicalType;
 import org.apache.arrow.adapter.parquet.type.RepetitionType;
+import org.apache.parquet.format.SchemaElement;
 
 
 /**
@@ -60,36 +64,6 @@ public abstract class SchemaNode {
     this.repetition = repetition;
     this.logicalType = logicalType;
     this.convertedType = convertedType;
-    this.fieldId = fieldId;
-    this.parent = null;
-  }
-
-  protected SchemaNode(
-      SchemaNode.Type nodeType, String name,
-      RepetitionType repetition,
-      ConvertedType convertedType, /* = ConvertedType::NONE,*/
-      int fieldId /* = -1*/) {
-
-    this.nodeType = nodeType;
-    this.name = name;
-    this.repetition = repetition;
-    this.convertedType = convertedType;
-    this.logicalType = null; // or LogicalType.none();
-    this.fieldId = fieldId;
-    this.parent = null;
-  }
-
-  protected SchemaNode(
-      SchemaNode.Type nodeType, String name,
-      RepetitionType repetition,
-      LogicalType logicalType,
-      int fieldId /* = -1 */) {
-
-    this.nodeType = nodeType;
-    this.name = name;
-    this.repetition = repetition;
-    this.convertedType = ConvertedType.NONE;
-    this.logicalType = logicalType;
     this.fieldId = fieldId;
     this.parent = null;
   }
@@ -185,4 +159,66 @@ public abstract class SchemaNode {
 
   /** Produce a Thrift SchemaElement for this schema node. */
   public abstract org.apache.parquet.format.SchemaElement toParquet();
+
+  /** Convert a flat list of Thrift schema elements into a structured hierarchy of schema nodes. */
+  public static SchemaNode unflatten(List<SchemaElement> elements) {
+
+    if (elements.isEmpty()) {
+      throw new ParquetException("Parquet schema contains no elements");
+    }
+
+    if (elements.get(0).getNum_children() == 0) {
+
+      if (elements.size() > 1) {
+        throw new ParquetException("Parquet schema contains multiple elements but root had no children");
+      }
+
+      return SchemaGroupNode.fromParquet(elements.get(0), Collections.emptyList());
+    }
+
+    // We don't check that the root node is repeated since this is not
+    // consistently set by implementations
+
+    UnflattenElements unflatten = new UnflattenElements(elements, 0);
+    return unflattenNextNode(unflatten);
+  }
+
+  private static SchemaNode unflattenNextNode(UnflattenElements unflatten) {
+
+    if (unflatten.pos == unflatten.elements.size()) {
+      throw new ParquetException("Malformed schema: not enough elements");
+    }
+
+    SchemaElement element = unflatten.elements.get(unflatten.pos++);
+
+    if (element.getNum_children() == 0 && element.isSetType()) {
+
+      // Leaf (primitive) node: always has a type
+      return SchemaPrimitiveNode.fromParquet(element);
+
+    } else {
+
+      // Group node (may have 0 children, but cannot have a type)
+      List<SchemaNode> fields = new ArrayList<>();
+
+      for (int i = 0; i < element.getNum_children(); ++i) {
+
+        SchemaNode field = unflattenNextNode(unflatten);
+        fields.add(field);
+      }
+
+      return SchemaGroupNode.fromParquet(element, fields);
+    }
+  }
+
+  private static class UnflattenElements {
+
+    List<SchemaElement> elements;
+    int pos;
+
+    UnflattenElements(List<SchemaElement> elements, int pos) {
+      this.elements = elements;
+      this.pos = pos;
+    }
+  }
 }

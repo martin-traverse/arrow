@@ -28,6 +28,7 @@ import org.apache.arrow.adapter.parquet.type.DecimalMetadata;
 import org.apache.arrow.adapter.parquet.type.LogicalType;
 import org.apache.arrow.adapter.parquet.type.NoLogicalType;
 import org.apache.arrow.adapter.parquet.type.RepetitionType;
+import org.apache.parquet.format.SchemaElement;
 
 
 /**
@@ -212,6 +213,46 @@ public class SchemaGroupNode extends SchemaNode {
     int result = super.hashCode();
     result = 31 * result + fields.hashCode();
     return result;
+  }
+
+  /** Create a group schema node from a Thrift schema element and a list of child nodes. */
+  public static SchemaGroupNode fromParquet(SchemaElement element, List<SchemaNode> fields) {
+
+    int fieldId = element.isSetField_id() ? element.getField_id() : -1;
+
+    if (element.isSetLogicalType()) {
+
+      // updated writer with logical type present
+
+      return new SchemaGroupNode(
+          element.getName(),
+          convertEnum(RepetitionType.class, element.getRepetition_type()),
+          fields,
+          LogicalType.fromThrift(element.getLogicalType()),
+          fieldId);
+
+    } else if (element.isSetConverted_type()) {
+
+      // Legacy converted type available
+
+      return new SchemaGroupNode(
+          element.getName(),
+          convertEnum(RepetitionType.class, element.getRepetition_type()),
+          fields,
+          convertEnum(ConvertedType.class, element.getConverted_type()),
+          fieldId);
+
+    } else {
+
+      // No logical type available, so use NoLogicalType
+
+      return new SchemaGroupNode(
+          element.getName(),
+          convertEnum(RepetitionType.class, element.getRepetition_type()),
+          fields,
+          new NoLogicalType(),
+          fieldId);
+    }
   }
 
   @Override
