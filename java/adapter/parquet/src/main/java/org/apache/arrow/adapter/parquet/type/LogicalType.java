@@ -491,9 +491,7 @@ public abstract class LogicalType {
   /**
    * If possible, return the legacy converted type (and decimal metadata if applicable)equivalent to this logical type.
    */
-  public ConvertedType toConvertedType(DecimalMetadata outDecimalMetadata) {
-
-    outDecimalMetadata.reset();
+  public ConvertedType toConvertedType() {
 
     switch (compatability) {
 
@@ -507,6 +505,11 @@ public abstract class LogicalType {
         // Should never happen
         throw new ParquetException("Logical type compatibility is not specified");
     }
+  }
+
+  public DecimalMetadata toConvertedDecimalMetadata() {
+
+    return DecimalMetadata.zeroUnset();
   }
 
   /** Return a printable representation of this logical type. */

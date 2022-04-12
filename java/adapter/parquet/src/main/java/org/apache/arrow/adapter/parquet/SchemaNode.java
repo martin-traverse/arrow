@@ -40,12 +40,29 @@ public abstract class SchemaNode {
   protected final SchemaNode.Type nodeType;
   protected final String name;
   protected final RepetitionType repetition;
-  protected ConvertedType convertedType;
-  protected LogicalType logicalType;
+  protected final LogicalType logicalType;
+  protected final ConvertedType convertedType;
   protected final int fieldId;
 
   // Nodes should not be shared, they have a single parent.
+  // Parent is not part of equals() or hashCode()
   private SchemaNode parent;
+
+  protected SchemaNode(
+      SchemaNode.Type nodeType, String name,
+      RepetitionType repetition,
+      LogicalType logicalType,
+      ConvertedType convertedType,
+      int fieldId /* = -1 */) {
+
+    this.nodeType = nodeType;
+    this.name = name;
+    this.repetition = repetition;
+    this.logicalType = logicalType;
+    this.convertedType = convertedType;
+    this.fieldId = fieldId;
+    this.parent = null;
+  }
 
   protected SchemaNode(
       SchemaNode.Type nodeType, String name,
@@ -106,6 +123,11 @@ public abstract class SchemaNode {
     return fieldId;
   }
 
+  protected void setParent(SchemaNode parent) {
+
+    this.parent = parent;
+  }
+
   public SchemaNode parent() {
     return parent;
   }
@@ -161,26 +183,6 @@ public abstract class SchemaNode {
     return ColumnPath.fromNode(this);
   }
 
+  /** Produce a Thrift SchemaElement for this schema node. */
   public abstract org.apache.parquet.format.SchemaElement toParquet();
-
-  protected boolean equalsInternal(SchemaNode other) {
-
-    boolean nameEqual = (name == null && other.name == null) ||
-        (name != null && name.equals(other.name));
-
-    boolean logicalTypeEqual = (logicalType == null && other.logicalType == null) ||
-        (logicalType != null && other.logicalType != null && logicalType.equals(other.logicalType));
-
-    return nodeType == other.nodeType &&
-        nameEqual &&
-        repetition == other.repetition &&
-        convertedType == other.convertedType &&
-        fieldId == other.fieldId() &&
-        logicalTypeEqual;
-  }
-
-  protected void setParent(SchemaNode parent) {
-
-    this.parent = parent;
-  }
 }

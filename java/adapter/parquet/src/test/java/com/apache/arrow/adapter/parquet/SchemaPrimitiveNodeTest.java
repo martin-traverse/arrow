@@ -33,7 +33,7 @@ import org.apache.arrow.adapter.parquet.type.RepetitionType;
 import org.junit.jupiter.api.Test;
 
 
-public class PrimitiveNodeTest {
+public class SchemaPrimitiveNodeTest {
 
   @Test
   void attrs() {
@@ -147,21 +147,6 @@ public class PrimitiveNodeTest {
     assertEquals(12, primitiveNode.decimalMetadata().precision());
   }
 
-  static class MutablePrimitiveNode extends SchemaPrimitiveNode {
-
-    public MutablePrimitiveNode(
-        String name, RepetitionType repetition,
-        ParquetType physicalType, ConvertedType convertedType,
-        int length, int precision, int scale) {
-
-      super(name, repetition, physicalType, convertedType, length, precision, scale, /* fieldId = */ -1);
-    }
-
-    public void setTypeLength(int length) {
-      typeLength = length;
-    }
-  }
-
   @Test
   void equals() {
 
@@ -182,19 +167,15 @@ public class PrimitiveNodeTest {
         ParquetType.FIXED_LEN_BYTE_ARRAY, ConvertedType.DECIMAL,
         12, 4, 2);
 
-    MutablePrimitiveNode flba2 = new MutablePrimitiveNode(
+    SchemaPrimitiveNode flba2 = new SchemaPrimitiveNode(
         "foo", RepetitionType.REQUIRED,
         ParquetType.FIXED_LEN_BYTE_ARRAY, ConvertedType.DECIMAL,
-        1, 4, 2);
+        12, 4, 2);
 
-    flba2.setTypeLength(12);
-
-    MutablePrimitiveNode flba3 = new MutablePrimitiveNode(
+    SchemaPrimitiveNode flba3 = new SchemaPrimitiveNode(
         "foo", RepetitionType.REQUIRED,
         ParquetType.FIXED_LEN_BYTE_ARRAY, ConvertedType.DECIMAL,
-        1, 4, 2);
-
-    flba3.setTypeLength(16);
+        16, 4, 2);
 
     SchemaPrimitiveNode flba4 = new SchemaPrimitiveNode(
         "foo", RepetitionType.REQUIRED,

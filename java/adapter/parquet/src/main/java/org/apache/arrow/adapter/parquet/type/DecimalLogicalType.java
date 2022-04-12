@@ -113,10 +113,15 @@ public class DecimalLogicalType extends LogicalType {
   }
 
   @Override
-  public ConvertedType toConvertedType(DecimalMetadata outDecimalMetadata) {
+  public ConvertedType toConvertedType() {
 
-    outDecimalMetadata.set(true, precision, scale);
     return ConvertedType.DECIMAL;
+  }
+
+  @Override
+  public DecimalMetadata toConvertedDecimalMetadata() {
+
+    return new DecimalMetadata(true, precision, scale);
   }
 
   @Override

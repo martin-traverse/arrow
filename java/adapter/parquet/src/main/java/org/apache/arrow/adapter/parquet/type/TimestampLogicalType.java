@@ -119,9 +119,7 @@ public class TimestampLogicalType extends LogicalType {
   }
 
   @Override
-  public ConvertedType toConvertedType(DecimalMetadata outDecimalMetadata) {
-
-    outDecimalMetadata.reset();
+  public ConvertedType toConvertedType() {
 
     if (isAdjustedToUtc || forceSetConvertedType) {
       if (unit == TimeUnit.MILLIS) {

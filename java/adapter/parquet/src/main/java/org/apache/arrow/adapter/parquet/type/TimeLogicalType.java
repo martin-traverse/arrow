@@ -93,9 +93,7 @@ public class TimeLogicalType extends LogicalType {
   }
 
   @Override
-  public ConvertedType toConvertedType(DecimalMetadata outDecimalMetadata) {
-
-    outDecimalMetadata.reset();
+  public ConvertedType toConvertedType() {
 
     if (isAdjustedToUtc) {
       if (unit == TimeUnit.MILLIS) {

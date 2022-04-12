@@ -34,74 +34,45 @@ import org.apache.arrow.adapter.parquet.type.RepetitionType;
 public class SchemaPrimitiveNode extends SchemaNode {
 
   private final ParquetType physicalType;
-  protected int typeLength;
+  private final int typeLength;
   private final DecimalMetadata decimalMetadata;
+
+  // Column order is mutable and not part of equals() or hashCode()
   private ColumnOrder columnOrder;
 
-  /** Create a schema node from an opaque schema element. */
-  public static SchemaNode fromParquet(org.apache.parquet.format.SchemaElement schemaElement) {
 
-    int fieldId = schemaElement.isSetField_id() ? schemaElement.getField_id() : -1;
+  // Helpers for quickly constructing primitive nodes in code (mostly used for testing)
 
-    if (schemaElement.isSetLogicalType()) {
-
-      // updated writer with logical type present
-
-      return new SchemaPrimitiveNode(
-          schemaElement.getName(),
-          convertEnum(RepetitionType.class, schemaElement.getRepetition_type()),
-          LogicalType.fromThrift(schemaElement.getLogicalType()),
-          convertEnum(ParquetType.class, schemaElement.getType()),
-          schemaElement.getType_length(),
-          schemaElement.getField_id());
-    }
-
-    if (schemaElement.isSetConverted_type()) {
-
-      // legacy writer with converted type present
-
-      return new SchemaPrimitiveNode(
-          schemaElement.getName(),
-          convertEnum(RepetitionType.class, schemaElement.getRepetition_type()),
-          convertEnum(ParquetType.class, schemaElement.getType()),
-          convertEnum(ConvertedType.class, schemaElement.getConverted_type()),
-          schemaElement.getType_length(), schemaElement.getPrecision(), schemaElement.getScale(), fieldId);
-    }
-
-    // logical type not present
-
-    return new SchemaPrimitiveNode(
-        schemaElement.getName(),
-        convertEnum(RepetitionType.class, schemaElement.getRepetition_type()),
-        new NoLogicalType(),
-        convertEnum(ParquetType.class, schemaElement.getType()),
-        schemaElement.getType_length(),
-        fieldId);
+  public static SchemaPrimitiveNode booleanNode(String name) {
+    return new SchemaPrimitiveNode(name, RepetitionType.OPTIONAL, ParquetType.BOOLEAN);
   }
 
-  private static <T extends Enum<T>, S extends Enum<S>> T convertEnum(Class<T> enumClass, S thriftEnum) {
-
-    return Enum.valueOf(enumClass, thriftEnum.name());
+  public static SchemaPrimitiveNode int32Node(String name) {
+    return new SchemaPrimitiveNode(name, RepetitionType.OPTIONAL, ParquetType.INT32);
   }
 
-  /**
-   * Create a schema node with the given type information.
-   *
-   * If no logical type, pass LogicalType::None() or null.
-   * A fieldId -1 (or any negative value) will be serialized as null in Thrift.
-   */
-  public SchemaPrimitiveNode(
-      String name, RepetitionType repetition,
-      LogicalType logicalType, ParquetType physicalType) {
-
-    this(name, repetition, logicalType, physicalType, /* physicalLength = */ -1, /* fieldId = */ -1);
+  public static SchemaPrimitiveNode int64Node(String name) {
+    return new SchemaPrimitiveNode(name, RepetitionType.OPTIONAL, ParquetType.INT64);
   }
 
-  /**
-   * Create a schema node with the given type information.
-   *
-   * A fieldId -1 (or any negative value) will be serialized as null in Thrift.
-   */
+  public static SchemaPrimitiveNode int96Node(String name) {
+    return new SchemaPrimitiveNode(name, RepetitionType.OPTIONAL, ParquetType.INT96);
+  }
+
+  public static SchemaPrimitiveNode floatNode(String name) {
+    return new SchemaPrimitiveNode(name, RepetitionType.OPTIONAL, ParquetType.FLOAT);
+  }
+
+  public static SchemaPrimitiveNode doubleNode(String name) {
+    return new SchemaPrimitiveNode(name, RepetitionType.OPTIONAL, ParquetType.DOUBLE);
+  }
+
+  public static SchemaPrimitiveNode byteArrayNode(String name) {
+    return new SchemaPrimitiveNode(name, RepetitionType.OPTIONAL, ParquetType.BYTE_ARRAY);
+  }
+
+
+  /** Create a schema node with just the physical type. */
   public SchemaPrimitiveNode(
       String name, RepetitionType repetition,
       ParquetType physicalType) {
@@ -111,10 +82,42 @@ public class SchemaPrimitiveNode extends SchemaNode {
   }
 
   /**
-   * Create a schema node with the given type information.
+   * Create a schema node from a logical type.
    *
+   * If no logical type, pass LogicalType::None() or null.
+   */
+  public SchemaPrimitiveNode(
+      String name, RepetitionType repetition,
+      LogicalType logicalType, ParquetType physicalType) {
+
+    this(name, repetition, logicalType, physicalType, /* physicalLength = */ -1, /* fieldId = */ -1);
+  }
+
+  /**
+   * Create a schema node from a logical type.
+   *
+   * If no logical type, pass LogicalType::None() or null.
    * A fieldId -1 (or any negative value) will be serialized as null in Thrift.
    */
+  public SchemaPrimitiveNode(
+      String name, RepetitionType repetition, LogicalType logicalType,
+      ParquetType physicalType, int physicalLength, int fieldId) {
+
+    super(
+        Type.PRIMITIVE, name, repetition,
+        logicalType,
+        logicalToConverted(logicalType, physicalType, physicalLength),
+        fieldId);
+
+    this.physicalType = physicalType;
+    this.typeLength = physicalLength;
+    this.decimalMetadata = logicalType.toConvertedDecimalMetadata();
+    this.columnOrder = new ColumnOrder(ColumnOrder.Type.UNDEFINED);
+
+    checkAssignedTypes();
+  }
+
+  /** Create a schema node from a legacy converted type. */
   public SchemaPrimitiveNode(
       String name, RepetitionType repetition,
       ParquetType physicalType, ConvertedType convertedType) {
@@ -123,11 +126,7 @@ public class SchemaPrimitiveNode extends SchemaNode {
         /* length = */ -1, /* precision = */ -1, /* scale = */ -1, /* fieldId = */ -1);
   }
 
-  /**
-   * Create a schema node with the given type information.
-   *
-   * A fieldId -1 (or any negative value) will be serialized as null in Thrift.
-   */
+  /** Create a schema node from a legacy converted type. */
   public SchemaPrimitiveNode(
       String name, RepetitionType repetition,
       ParquetType physicalType, ConvertedType convertedType, int length) {
@@ -136,11 +135,7 @@ public class SchemaPrimitiveNode extends SchemaNode {
         length, /* precision = */ -1, /* scale = */ -1, /* fieldId = */ -1);
   }
 
-  /**
-   * Create a schema node with the given type information.
-   *
-   * A fieldId -1 (or any negative value) will be serialized as null in Thrift.
-   */
+  /** Create a schema node from a legacy converted type. */
   public SchemaPrimitiveNode(
       String name, RepetitionType repetition,
       ParquetType physicalType, ConvertedType convertedType,
@@ -150,7 +145,7 @@ public class SchemaPrimitiveNode extends SchemaNode {
   }
 
   /**
-   * Create a schema node with the given type information.
+   * Create a schema node from a legacy converted type.
    *
    * A fieldId -1 (or any negative value) will be serialized as null in Thrift.
    */
@@ -159,14 +154,49 @@ public class SchemaPrimitiveNode extends SchemaNode {
       ParquetType physicalType, ConvertedType convertedType,
       int length, int precision, int scale, int fieldId) {
 
-    super(Type.PRIMITIVE, name, repetition, convertedType, fieldId);
+    super(
+        Type.PRIMITIVE, name, repetition,
+        convertedToLogical(convertedType, physicalType, length, precision, scale),
+        convertedType,
+        fieldId);
 
     this.physicalType = physicalType;
     this.typeLength = length;
+    this.decimalMetadata = logicalType.toConvertedDecimalMetadata();
+    this.columnOrder = new ColumnOrder(ColumnOrder.Type.UNDEFINED);
 
-    // PARQUET-842: In an earlier revision, decimal_metadata_.isset was being
-    // set to true, but Impala will raise an incompatible metadata in such cases
-    this.decimalMetadata = DecimalMetadata.zeroUnset();
+    checkAssignedTypes();
+  }
+
+  private static ConvertedType logicalToConverted(
+      LogicalType logicalType, ParquetType physicalType,
+      int physicalLength) {
+
+    if (logicalType == null) {
+      logicalType = new NoLogicalType();
+    }
+
+    // Check for logical type <=> node type consistency
+
+    if (logicalType.isNested()) {
+      throw new ParquetException("Nested logical type " + logicalType + " can not be applied to non-group node");
+    }
+
+    // Check for logical type <=> physical type consistency
+    if (!logicalType.isApplicable(physicalType, physicalLength)) {
+      throw new ParquetException(logicalType + " can not be applied to primitive type " + physicalType.name());
+    }
+
+    return logicalType.toConvertedType();
+  }
+
+  private static LogicalType convertedToLogical(
+      ConvertedType convertedType, ParquetType physicalType,
+      int length, int precision, int scale) {
+
+    // For forward compatibility, create an equivalent logical type
+
+    DecimalMetadata decimalMetadata = DecimalMetadata.zeroUnset();
 
     // Check if the physical and logical types match
     // Mapping referred from Apache parquet-mr as on 2016-02-22
@@ -198,22 +228,22 @@ public class SchemaPrimitiveNode extends SchemaNode {
         if (precision <= 0) {
           throw new ParquetException(
               "Invalid DECIMAL precision: " + precision +
-              ". Precision must be a number between 1 and 38 inclusive");
+                  ". Precision must be a number between 1 and 38 inclusive");
         }
 
         if (scale < 0) {
           throw new ParquetException(
               "Invalid DECIMAL scale: " + scale +
-              ". Scale must be a number between 0 and precision inclusive");
+                  ". Scale must be a number between 0 and precision inclusive");
         }
 
         if (scale > precision) {
           throw new ParquetException(
               "Invalid DECIMAL scale " + scale +
-            " cannot be greater than precision " + precision);
+                  " cannot be greater than precision " + precision);
         }
 
-        decimalMetadata.set(true, precision, scale);
+        decimalMetadata = new DecimalMetadata(true, precision, scale);
 
         break;
 
@@ -270,52 +300,7 @@ public class SchemaPrimitiveNode extends SchemaNode {
         throw new ParquetException(convertedType.name() + " cannot be applied to a primitive type");
     }
 
-    // For forward compatibility, create an equivalent logical type
-    this.logicalType = LogicalType.fromConvertedType(convertedType, decimalMetadata);
-
-    checkAssignedTypes();
-  }
-
-  /**
-   * Create a schema node with the given type information.
-   *
-   * If no logical type, pass LogicalType::None() or null.
-   * A fieldId -1 (or any negative value) will be serialized as null in Thrift.
-   */
-  public SchemaPrimitiveNode(
-      String name, RepetitionType repetition, LogicalType logicalType,
-      ParquetType physicalType, int physicalLength, int fieldId) {
-
-    super(Type.PRIMITIVE, name, repetition, logicalType, fieldId);
-
-    this.physicalType = physicalType;
-    this.typeLength = physicalLength;
-
-    // PARQUET-842: In an earlier revision, decimal_metadata_.isset was being
-    // set to true, but Impala will raise an incompatible metadata in such cases
-    this.decimalMetadata = DecimalMetadata.zeroUnset();
-
-    if (logicalType != null) {
-
-      // Check for logical type <=> node type consistency
-
-      if (logicalType.isNested()) {
-        throw new ParquetException("Nested logical type " + logicalType + " can not be applied to non-group node");
-      }
-
-      // Check for logical type <=> physical type consistency
-      if (!logicalType.isApplicable(physicalType, physicalLength)) {
-        throw new ParquetException(logicalType + " can not be applied to primitive type " + physicalType.name());
-      }
-
-    } else {
-
-      logicalType = new NoLogicalType();
-    }
-
-    convertedType = logicalType.toConvertedType(decimalMetadata);
-
-    checkAssignedTypes();
+    return LogicalType.fromConvertedType(convertedType, decimalMetadata);
   }
 
   private void checkAssignedTypes() {
@@ -337,7 +322,6 @@ public class SchemaPrimitiveNode extends SchemaNode {
       }
     }
   }
-
 
   public ParquetType physicalType() {
     return physicalType;
@@ -393,6 +377,47 @@ public class SchemaPrimitiveNode extends SchemaNode {
     return result;
   }
 
+  /** Create a primitive schema node from a Thrift schema element. */
+  public static SchemaNode fromParquet(org.apache.parquet.format.SchemaElement schemaElement) {
+
+    int fieldId = schemaElement.isSetField_id() ? schemaElement.getField_id() : -1;
+
+    if (schemaElement.isSetLogicalType()) {
+
+      // updated writer with logical type present
+
+      return new SchemaPrimitiveNode(
+          schemaElement.getName(),
+          convertEnum(RepetitionType.class, schemaElement.getRepetition_type()),
+          LogicalType.fromThrift(schemaElement.getLogicalType()),
+          convertEnum(ParquetType.class, schemaElement.getType()),
+          schemaElement.getType_length(),
+          schemaElement.getField_id());
+    }
+
+    if (schemaElement.isSetConverted_type()) {
+
+      // legacy writer with converted type present
+
+      return new SchemaPrimitiveNode(
+          schemaElement.getName(),
+          convertEnum(RepetitionType.class, schemaElement.getRepetition_type()),
+          convertEnum(ParquetType.class, schemaElement.getType()),
+          convertEnum(ConvertedType.class, schemaElement.getConverted_type()),
+          schemaElement.getType_length(), schemaElement.getPrecision(), schemaElement.getScale(), fieldId);
+    }
+
+    // logical type not present
+
+    return new SchemaPrimitiveNode(
+        schemaElement.getName(),
+        convertEnum(RepetitionType.class, schemaElement.getRepetition_type()),
+        new NoLogicalType(),
+        convertEnum(ParquetType.class, schemaElement.getType()),
+        schemaElement.getType_length(),
+        fieldId);
+  }
+
   @Override
   public org.apache.parquet.format.SchemaElement toParquet() {
 
@@ -433,6 +458,11 @@ public class SchemaPrimitiveNode extends SchemaNode {
     }
 
     return element;
+  }
+
+  private static <T extends Enum<T>, S extends Enum<S>> T convertEnum(Class<T> enumClass, S thriftEnum) {
+
+    return Enum.valueOf(enumClass, thriftEnum.name());
   }
 
   // TODO: Visitors

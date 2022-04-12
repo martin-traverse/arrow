@@ -103,9 +103,7 @@ public class IntLogicalType extends LogicalType {
   }
 
   @Override
-  public ConvertedType toConvertedType(DecimalMetadata outDecimalMetadata) {
-
-    outDecimalMetadata.reset();
+  public ConvertedType toConvertedType() {
 
     if (signed) {
       switch (width) {
