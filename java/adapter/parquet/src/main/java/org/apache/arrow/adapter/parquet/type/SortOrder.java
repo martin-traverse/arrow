@@ -36,6 +36,7 @@ public enum SortOrder {
   UNSIGNED,
   UNKNOWN;
 
+  /** Infer sort order for a logical type. */
   public static SortOrder getSortOrder(LogicalType logicalType, ParquetType primitive) {
 
     SortOrder o = SortOrder.UNKNOWN;
@@ -50,6 +51,7 @@ public enum SortOrder {
     return o;
   }
 
+  /** Infer sort order for a converted type. */
   public static SortOrder getSortOrder(ConvertedType converted, ParquetType primitive) {
     
     if (converted == ConvertedType.NONE) {
@@ -81,14 +83,14 @@ public enum SortOrder {
       case MAP:
       case MAP_KEY_VALUE:
       case INTERVAL:
-      case NA:    // required instead of default
+      case NA: // required instead of default
       case UNDEFINED:
       default:
         return SortOrder.UNKNOWN;
     }
   }
 
-  // Return the Sort Order of the Parquet Physical Types
+  /** Return the Sort Order of the Parquet Physical Types. */
   public static SortOrder defaultSortOrder(ParquetType primitive) {
 
     switch (primitive) {

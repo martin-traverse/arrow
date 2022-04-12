@@ -37,8 +37,8 @@ public class ColumnDescriptor {
   private final short maxDefinitionLevel;
   private final short maxRepetitionLevel;
 
-  public ColumnDescriptor(SchemaNode node, short maxDefinitionLevel,
-                   short maxRepetitionLevel) {
+  /** ColumnDescriptor standard constructor. */
+  public ColumnDescriptor(SchemaNode node, short maxDefinitionLevel, short maxRepetitionLevel) {
 
     // CPP code has extra param SchemaDescriptor schema_descr, default = null, unused
 
@@ -70,13 +70,13 @@ public class ColumnDescriptor {
     // Do not consider node, since primitiveNode == node
     // Also, constructor will fail if node == null
 
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) { return true; }
+    if (o == null || getClass() != o.getClass()) { return false; }
 
     ColumnDescriptor that = (ColumnDescriptor) o;
 
-    if (maxDefinitionLevel != that.maxDefinitionLevel) return false;
-    if (maxRepetitionLevel != that.maxRepetitionLevel) return false;
+    if (maxDefinitionLevel != that.maxDefinitionLevel) { return false; }
+    if (maxRepetitionLevel != that.maxRepetitionLevel) { return false; }
     return primitiveNode.equals(that.primitiveNode);
   }
 
@@ -112,10 +112,12 @@ public class ColumnDescriptor {
     return primitiveNode.path();
   }
 
+  /** Column order for this column. */
   public ColumnOrder columnOrder() {
     return primitiveNode.columnOrder();
   }
 
+  /** Sort order for this column. */
   public SortOrder sortOrder() {
     LogicalType la = logicalType();
     ParquetType pt = physicalType();

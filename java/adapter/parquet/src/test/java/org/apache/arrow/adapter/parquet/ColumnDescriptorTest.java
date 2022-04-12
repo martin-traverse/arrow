@@ -45,14 +45,14 @@ public class ColumnDescriptorTest {
     assertEquals(-1, descr.typeLength());
     
     String expectedDescr = "column descriptor = {\n" +
-    "  name: name,\n" + 
-    "  path: ,\n" +
-    "  physical_type: BYTE_ARRAY,\n" + 
-    "  converted_type: UTF8,\n" +
-    "  logical_type: String,\n" +
-    "  max_definition_level: 4,\n" +
-    "  max_repetition_level: 1,\n" +
-    "}";
+        "  name: name,\n" +
+        "  path: ,\n" +
+        "  physical_type: BYTE_ARRAY,\n" +
+        "  converted_type: UTF8,\n" +
+        "  logical_type: String,\n" +
+        "  max_definition_level: 4,\n" +
+        "  max_repetition_level: 1,\n" +
+        "}";
     
     assertEquals(expectedDescr, descr.toString());
 
@@ -67,17 +67,17 @@ public class ColumnDescriptorTest {
     assertEquals(12, descr2.typeLength());
 
     expectedDescr = "column descriptor = {\n" +
-    "  name: name,\n" +
-    "  path: ,\n" +
-    "  physical_type: FIXED_LEN_BYTE_ARRAY,\n" +
-    "  converted_type: DECIMAL,\n" +
-    "  logical_type: Decimal(precision=10, scale=4),\n" +
-    "  max_definition_level: 4,\n" +
-    "  max_repetition_level: 1,\n" +
-    "  length: 12,\n" +
-    "  precision: 10,\n" +
-    "  scale: 4,\n" +
-    "}";
+        "  name: name,\n" +
+        "  path: ,\n" +
+        "  physical_type: FIXED_LEN_BYTE_ARRAY,\n" +
+        "  converted_type: DECIMAL,\n" +
+        "  logical_type: Decimal(precision=10, scale=4),\n" +
+        "  max_definition_level: 4,\n" +
+        "  max_repetition_level: 1,\n" +
+        "  length: 12,\n" +
+        "  precision: 10,\n" +
+        "  scale: 4,\n" +
+        "}";
 
     assertEquals(expectedDescr, descr2.toString());
 
