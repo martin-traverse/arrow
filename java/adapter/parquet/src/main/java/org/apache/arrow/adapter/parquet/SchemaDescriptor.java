@@ -18,6 +18,7 @@
 package org.apache.arrow.adapter.parquet;
 
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,15 +37,17 @@ import java.util.Map;
  */
 public class SchemaDescriptor {
 
-  private SchemaNode schema;
   // Root Node
-
-  private final Object /* schema::GroupNode* */ groupNode;
+  private final SchemaNode schema;
+  private final SchemaGroupNode groupNode;
 
   // Result of leaf node / tree analysis
-  List<ColumnDescriptor> leaves;
+  private final List<ColumnDescriptor> leaves;
 
-  // std::unordered_map<const schema::PrimitiveNode*, int> node_to_leaf_index_;
+  private final Map<SchemaPrimitiveNode, Integer> nodeToLeafIndex;
+
+  // Mapping between ColumnPath DotString to the leaf index
+  private final Map<String, List<Integer>> leafToIdx;
 
   // Mapping between leaf nodes and root group of leaf (first node
   // below the schema's root group)
@@ -57,45 +60,101 @@ public class SchemaDescriptor {
   // -- -- -- -- d
   private final Map<Integer, SchemaNode> leafToBase;
 
-  // Mapping between ColumnPath DotString to the leaf index
-  private final Map<String, Integer> leafToIdx;
 
-
-  /** Default constructor. */
-  public SchemaDescriptor() {
-
-    groupNode = new Object();
-    leafToBase = new HashMap<>();
-    leafToIdx = new HashMap<>();
-
-  }
-
-  // ~SchemaDescriptor() {}
-
-  /** Init the schema descriptor using the given root schema node. */
-  public void init(SchemaNode schema) {
-
-    this.schema = schema;
+  /** Construct a schema descriptor using the given root schema node. */
+  public SchemaDescriptor(SchemaNode schema) {
 
     if (!schema.isGroup()) {
       throw new ParquetException("Must initialize with a schema group");
     }
 
-    // todo
+    this.schema = schema;
+    this.groupNode = (SchemaGroupNode) schema;
 
-    //
-    //        groupNode = (GroupNode) schema.get();
-    //        leaves.clear();
-    //
-    //        for (int i = 0; i < groupNode.fieldCount(); ++i) {
-    //            buildTree(groupNode.field(i), 0, 0, groupNode.field(i));
-    //        }
+    this.leaves = new ArrayList<>();
+    this.nodeToLeafIndex = new HashMap<>();
+    this.leafToBase = new HashMap<>();
+    this.leafToIdx = new HashMap<>();
+
+    for (int i = 0; i < groupNode.fieldCount(); ++i) {
+      buildTree(groupNode.field(i), (short) 0, (short) 0, groupNode.field(i));
+    }
+  }
+
+  private void buildTree(SchemaNode node, short maxDefLevel, short maxRepLevel, SchemaNode base) {
+
+    if (node.isOptional()) {
+      ++maxDefLevel;
+    } else if (node.isRepeated()) {
+      // Repeated fields add a definition level. This is used to distinguish
+      // between an empty list and a list with an item in it.
+      ++maxRepLevel;
+      ++maxDefLevel;
+    }
+
+    // Now, walk the schema and create a ColumnDescriptor for each leaf node
+    if (node.isGroup()) {
+
+      SchemaGroupNode group = (SchemaGroupNode) node;
+
+      for (int i = 0; i < group.fieldCount(); ++i) {
+        buildTree(group.field(i), maxDefLevel, maxRepLevel, base);
+      }
+
+    } else {
+
+      // CPP code passes this into ColumnDescriptor, so the column has a reference to the root schema
+      // But the field is not recorded or used anywhere in ColumnDescriptor (at least at present)
+
+      SchemaPrimitiveNode primitive = (SchemaPrimitiveNode) node;
+      ColumnDescriptor column = new ColumnDescriptor(node, maxDefLevel, maxRepLevel);
+      String dotString = node.path().toDotString();
+
+      nodeToLeafIndex.put(primitive, leaves.size());
+
+      // Primitive node, append to leaves
+      leaves.add(column);
+      leafToBase.put(leaves.size() - 1, base);
+
+      // Multiple entries per dot string
+      List<Integer> indices = leafToIdx.computeIfAbsent(dotString, k -> new ArrayList<>());
+      indices.add(leaves.size() - 1);
+    }
+  }
+
+  public void updateColumnOrders(List<ColumnOrder> columnOrders) {
+
+    // TODO
+  }
+
+  public String name() {
+    return groupNode.name();
+  }
+
+  public SchemaGroupNode groupNode() {
+    return groupNode;
+  }
+
+  /** Get the schema root node. */
+  public SchemaNode schemaRoot() {
+    return schema;
+  }
+
+  /** Return true if any field or their children have REPEATED repetition type. **/
+  public boolean hasRepeatedFields() {
+
+    return groupNode.hasRepeatedFields();
+  }
+
+  /** The number of physical columns appearing in the file. **/
+  public int numColumns() {
+    return leaves.size();
   }
 
   /** Get column descriptor for column index i. */
-  public ColumnDescriptor column(int i) {
+  public ColumnDescriptor column(int columnIndex) {
 
-    return null; // todo
+    return leaves.get(columnIndex);
   }
 
   /**
@@ -105,45 +164,55 @@ public class SchemaDescriptor {
    */
   public int columnIndex(String nodePath) {
 
-    return -1; // todo
+    List<Integer> search = leafToIdx.get(nodePath);
+
+    if (search != null) {
+      return search.get(0);
+    } else {
+      return -1;
+    }
   }
 
   /** Get the index of a column by its node, or negative value if not found. */
   public int columnIndex(SchemaNode node) {
 
-    return -1; // todo
+    List<Integer> search = leafToIdx.get(node.path().toDotString());
+
+    for (Integer idx : search) {
+      if (column(idx).schemaNode().equals(node)) { // deep comparison will match reconstructed nodes
+        return idx;
+      }
+    }
+
+    return -1;
+  }
+
+  /**
+   * Return column index corresponding to a particular PrimitiveNode.
+   *
+   * Returns -1 if not found
+   */
+  public int getColumnIndex(SchemaPrimitiveNode node) {
+
+    Integer idx = nodeToLeafIndex.get(node);
+
+    if (idx != null) {
+      return idx;
+    } else {
+      return -1;
+    }
+  }
+
+  /** Returns the root (child of the schema root) node of the leaf(column) node. */
+  public SchemaNode getColumnRoot(int columnIndex) {
+
+    return leafToBase.get(columnIndex);
   }
 
   /** Equality comparison for schema descriptors. **/
   public boolean equalTo(SchemaDescriptor other) {
 
     return false; // todo
-  }
-
-  /** The number of physical columns appearing in the file. **/
-  public int numColumns() {
-    return leaves.size();
-  }
-
-  /** Get the schema root node. */
-  public SchemaNode schemaRoot() {
-    return schema;
-  }
-
-  /// TODO.
-  public Object /*const schema::GroupNode* */ groupNode() {
-    //    return group_node_;
-    return null; // todo
-  }
-
-  /** Returns the root (child of the schema root) node of the leaf(column) node. */
-  public SchemaNode getColumnRoot(int i) {
-    return null; // todo
-  }
-
-  public String name() {
-    // return group_node_->name();
-    return null; // todo
   }
 
 
@@ -153,25 +222,5 @@ public class SchemaDescriptor {
   //
   //    }
 
-  //    public void updateColumnOrders(const std::vector<ColumnOrder>& column_orders) {
-  //
-  //    }
-  //
-  //    /// \brief Return column index corresponding to a particular
-  //    /// PrimitiveNode. Returns -1 if not found
-  //    public int getColumnIndex(const schema::PrimitiveNode& node) {
-  //
-  //    }
 
-  /** Return true if any field or their children have REPEATED repetition type. **/
-  public boolean hasRepeatedFields() {
-
-    return false; // todo
-  }
-
-
-  private void buildTree(SchemaNode node, short maxDefLevel, short maxRepLevel, SchemaNode base) {
-
-    // todo
-  }
 }
