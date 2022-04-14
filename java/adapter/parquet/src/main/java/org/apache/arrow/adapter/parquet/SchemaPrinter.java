@@ -20,7 +20,8 @@ package org.apache.arrow.adapter.parquet;
 import org.apache.arrow.adapter.parquet.type.ConvertedType;
 import org.apache.arrow.adapter.parquet.type.LogicalType;
 import org.apache.arrow.adapter.parquet.type.RepetitionType;
-import org.apache.commons.lang3.StringUtils;
+
+import java.util.Arrays;
 
 
 /** Text string printer to pretty-print a formatted schema definition. */
@@ -159,11 +160,10 @@ public class SchemaPrinter {
 
   private static void indent(StringBuilder sb, int indent) {
 
-    // Apache commons is already a dependency, so StringUtils is available
-
     if (indent > 0) {
-      sb.append(StringUtils.repeat(' ', indent));
+      char[] buf = new char[indent];
+      Arrays.fill(buf, ' ');
+      sb.append(buf);
     }
   }
-
 }
