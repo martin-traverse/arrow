@@ -17,9 +17,9 @@
 
 package org.apache.arrow.adapter.parquet;
 
-
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -122,9 +122,44 @@ public class SchemaDescriptor {
     }
   }
 
+  /**
+   * Set the column order for all primitive columns.
+   *
+   * The number of column orders supplied must match the number of primitive columns.
+   */
+  // This is changed from the CPP implementation, which uses visitors to hold the iterator position
   public void updateColumnOrders(List<ColumnOrder> columnOrders) {
 
-    // TODO
+    Iterator<ColumnOrder> columnOrderItr = columnOrders.iterator();
+
+    updateColumnOrders(groupNode, columnOrders.iterator());
+
+    if (!columnOrderItr.hasNext()) {
+      throw new ParquetException("Wrong number of column orders supplied (more than the number of columns)");
+    }
+  }
+
+  private void updateColumnOrders(SchemaNode node, Iterator<ColumnOrder> columnOrderItr) {
+
+    if (node.isGroup()) {
+
+      SchemaGroupNode groupNode = (SchemaGroupNode) node;
+
+      for (int fieldIndex = 0; fieldIndex < groupNode.fieldCount(); ++fieldIndex) {
+        updateColumnOrders(groupNode.field(fieldIndex), columnOrderItr);
+      }
+
+    } else { // leaf node
+
+      if (!columnOrderItr.hasNext()) {
+        throw new ParquetException("Wrong number of column orders supplied (less than the number of columns)");
+      }
+
+      SchemaPrimitiveNode leafNode = (SchemaPrimitiveNode) node;
+      ColumnOrder columnOrder = columnOrderItr.next();
+
+      leafNode.setColumnOrder(columnOrder);
+    }
   }
 
   public String name() {
@@ -178,9 +213,11 @@ public class SchemaDescriptor {
 
     List<Integer> search = leafToIdx.get(node.path().toDotString());
 
-    for (Integer idx : search) {
-      if (column(idx).schemaNode().equals(node)) { // deep comparison will match reconstructed nodes
-        return idx;
+    if (search != null) {
+      for (Integer idx : search) {
+        if (column(idx).schemaNode().equals(node)) { // deep comparison will match reconstructed nodes
+          return idx;
+        }
       }
     }
 
@@ -209,18 +246,33 @@ public class SchemaDescriptor {
     return leafToBase.get(columnIndex);
   }
 
-  /** Equality comparison for schema descriptors. **/
-  public boolean equalTo(SchemaDescriptor other) {
+  @Override
+  public boolean equals(Object o) {
 
-    return false; // todo
+    if (this == o) { return true; }
+    if (!(o instanceof SchemaDescriptor)) { return false; }
+
+    SchemaDescriptor that = (SchemaDescriptor) o;
+
+    // This mirrors the CPP implementation, which checks only the flattened leaf nodes
+    // Unit test for equality fails if we compare the root schema node, which includes the top level name
+
+    return leaves.equals(that.leaves);
   }
 
+  @Override
+  public int hashCode() {
+    return leaves.hashCode();
+  }
 
-  // todo
+  @Override
+  public String toString() {
 
-  //    public String toString() {
-  //
-  //    }
+    StringBuilder sb = new StringBuilder();
 
+    SchemaPrinter.printSchema(groupNode, sb);
+
+    return sb.toString();
+  }
 
 }

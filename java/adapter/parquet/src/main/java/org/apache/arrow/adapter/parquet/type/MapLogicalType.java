@@ -49,6 +49,6 @@ public class MapLogicalType extends LogicalType {
     // allow MAP_KEY_VALUE as a compatible converted type
 
     return (convertedType == ConvertedType.MAP || convertedType == ConvertedType.MAP_KEY_VALUE) &&
-        convertedDecimalMetadata.isSet();
+        !convertedDecimalMetadata.isSet();
   }
 }

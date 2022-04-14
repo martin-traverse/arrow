@@ -191,6 +191,10 @@ public class SchemaGroupNode extends SchemaNode {
         return true;
       }
 
+      // TODO: Check difference with CPP implementation
+      // CPP does not continue after checking the first group field
+      // Is this a bug?
+
       if (field.isGroup()) {
         SchemaGroupNode group = (SchemaGroupNode) field;
         if (group.hasRepeatedFields()) {
