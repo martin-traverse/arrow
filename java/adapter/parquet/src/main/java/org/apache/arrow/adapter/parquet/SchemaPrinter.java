@@ -29,9 +29,14 @@ public class SchemaPrinter {
   private static final String EOL = "\n"; // always use Unix-style line endings
   private static final int INDENT_WIDTH = 2;
 
-  public static void printSchema(SchemaNode schema, StringBuilder sb) {
+  /** Pretty-print a text representation of the given schema node. */
+  public static String printSchema(SchemaNode schema) {
+
+    StringBuilder sb = new StringBuilder();
 
     printNode(schema, sb, 0);
+
+    return sb.toString();
   }
 
   private static void printNode(SchemaNode node, StringBuilder sb, int indent) {

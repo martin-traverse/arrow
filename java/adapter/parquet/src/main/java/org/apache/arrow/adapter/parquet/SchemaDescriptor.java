@@ -267,12 +267,6 @@ public class SchemaDescriptor {
 
   @Override
   public String toString() {
-
-    StringBuilder sb = new StringBuilder();
-
-    SchemaPrinter.printSchema(groupNode, sb);
-
-    return sb.toString();
+    return SchemaPrinter.printSchema(schema);
   }
-
 }
