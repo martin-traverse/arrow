@@ -17,11 +17,11 @@
 
 package org.apache.arrow.adapter.parquet;
 
+import java.util.Arrays;
+
 import org.apache.arrow.adapter.parquet.type.ConvertedType;
 import org.apache.arrow.adapter.parquet.type.LogicalType;
 import org.apache.arrow.adapter.parquet.type.RepetitionType;
-
-import java.util.Arrays;
 
 
 /** Text string printer to pretty-print a formatted schema definition. */
