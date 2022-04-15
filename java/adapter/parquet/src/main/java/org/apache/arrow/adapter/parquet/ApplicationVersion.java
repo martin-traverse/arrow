@@ -25,6 +25,25 @@ import java.util.Objects;
 
 public class ApplicationVersion {
 
+  // Known Versions with Issues
+
+  public static ApplicationVersion PARQUET_251_FIXED_VERSION() {
+    return new ApplicationVersion("parquet-mr", 1, 8, 0);
+  }
+
+  public static ApplicationVersion PARQUET_816_FIXED_VERSION() {
+    return new ApplicationVersion("parquet-mr", 1, 2, 9);
+  }
+
+  public static ApplicationVersion PARQUET_CPP_FIXED_STATS_VERSION() {
+    return new ApplicationVersion("parquet-cpp", 1, 3, 0);
+  }
+
+  public static ApplicationVersion PARQUET_MR_FIXED_STATS_VERSION() {
+    return new ApplicationVersion("parquet-mr", 1, 10, 0);
+  }
+
+
   // Application that wrote the file. e.g. "IMPALA"
   private final String application;
   // Build name
@@ -56,36 +75,22 @@ public class ApplicationVersion {
   }
 
   private final Version version;
-  // Known Versions with Issues
 
-  public static ApplicationVersion PARQUET_251_FIXED_VERSION() {
-    return new ApplicationVersion("parquet-mr", 1, 8, 0);
+  public ApplicationVersion(String application, String build, Version version){
+    this.application = application;
+    this.build = build;
+    this.version = version;
   }
 
-  public static ApplicationVersion PARQUET_816_FIXED_VERSION() {
-    return new ApplicationVersion("parquet-mr", 1, 2, 9);
-  }
+  public ApplicationVersion(String application, int major, int minor, int patch) {
 
-  public static ApplicationVersion PARQUET_CPP_FIXED_STATS_VERSION() {
-    return new ApplicationVersion("parquet-cpp", 1, 3, 0);
-  }
-
-  public static ApplicationVersion PARQUET_MR_FIXED_STATS_VERSION() {
-    return new ApplicationVersion("parquet-mr", 1, 10, 0);
+    this(application, "", new Version(major, minor, patch, "", "", ""));
   }
 
   public ApplicationVersion(String createdBy) {
 
     // TODO: Implement application version parser
     throw new ParquetException("application version string parsing not implemented yet");
-  }
-
-  public ApplicationVersion(String application, int major, int minor, int patch) {
-
-    this.application = application;
-    this.build = "";
-
-    this.version = new Version(major, minor, patch, "", "", "");
   }
 
   // Returns true if version is strictly less than other_version
