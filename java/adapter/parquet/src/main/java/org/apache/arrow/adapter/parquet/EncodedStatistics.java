@@ -17,9 +17,16 @@
 
 package org.apache.arrow.adapter.parquet;
 
+
+/** Structure represented encoded statistics to be written to and from Parquet serialized metadata. */
 public class EncodedStatistics {
 
-  private String max, min;
+  // TODO: Are statistics min / max really strings, or encoded bytes?
+  // These are *encoded* statistics after all
+  // IF they are bytes, perhaps EncodedStatistics should use byte array instead of string?
+
+  private String max;
+  private String min;
   private boolean isSigned = false;
 
   private long nullCount = 0;
@@ -30,6 +37,7 @@ public class EncodedStatistics {
   private boolean hasNullCount = false;
   private boolean hasDistinctCount = false;
 
+  /** Construct a blank set of statistics. */
   public EncodedStatistics() {
     max = "";
     min = "";
@@ -51,12 +59,17 @@ public class EncodedStatistics {
     return hasMax;
   }
 
-  // From parquet-mr
-  // Don't write stats larger than the max size rather than truncating. The
-  // rationale is that some engines may use the minimum value in the page as
-  // the true minimum for aggregations and there is no way to mark that a
-  // value has been truncated and is a lower bound and not in the page.
-  void applyStatSizeLimits(long length) {
+  /**
+   * Don't write stats larger than the max size rather than truncating.
+   *
+   * The rationale is that some engines may use the minimum value in the page as
+   * the true minimum for aggregations and there is no way to mark that a
+   * value has been truncated and is a lower bound and not in the page.
+   */
+  public void applyStatSizeLimits(long length) {
+
+    // From parquet-mr
+
     if (max.length() > length) {
       hasMax = false;
     }
@@ -69,32 +82,38 @@ public class EncodedStatistics {
     return hasMin || hasMax || hasNullCount || hasDistinctCount;
   }
 
+  /** Check whether this statistics instance is signed. */
   public boolean isSigned() {
     return isSigned;
   }
 
+  /** Set whether this statistics instance is signed. */
   public void setIsSigned(boolean isSigned) {
     this.isSigned = isSigned;
   }
 
+  /** Set the max value for this statistics instance. */
   public EncodedStatistics setMax(String value) {
     max = value;
     hasMax = true;
     return this;
   }
 
+  /** Set the min value for this statistics instance. */
   public EncodedStatistics setMin(String value) {
     min = value;
     hasMin = true;
     return this;
   }
 
+  /** Set the null count for this statistics instance. */
   public EncodedStatistics setNullCount(long value) {
     nullCount = value;
     hasNullCount = true;
     return this;
   }
 
+  /** Set the distinct count for this statistics instance. */
   public EncodedStatistics setDistinctCount(long value) {
     distinctCount = value;
     hasDistinctCount = true;

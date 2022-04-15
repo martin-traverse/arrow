@@ -17,58 +17,66 @@
 
 package org.apache.arrow.adapter.parquet;
 
+
+/** Parser for Parquet version strings, to build the ApplicationVersion class. */
 public class ApplicationVersionParser {
 
-  private static final String spaces_ = " \t\r\n\f"; // \v  todo
-  private static final String digits_ = "0123456789";
+  private static final char[] spaces_ = " \t\r\n\f\u000B".toCharArray(); // \u000B = CPP \v, vertical feed
+  private static final char[] digits_ = "0123456789".toCharArray();
 
-  private String created_by_;
-  private ApplicationVersion application_version_;
+  private final String createdBy;
 
   private String application;
-  private ApplicationVersion.Version version;
+  private String build;
+  private int major;
+  private int minor;
+  private int patch;
+  private String unknown;
+  private String preRelease;
+  private String buildInfo;
 
   // For parsing.
-  private long version_parsing_position_;
-  private long version_start_;
-  private long version_end_;
-  private String version_string_;
+  private int versionParsingPosition;
+  private int versionStart;
+  private int versionEnd;
+  private String versionString;
 
-  public ApplicationVersionParser(String created_by, ApplicationVersion application_version) {
-    this.created_by_ = created_by;
-    this.application_version_ = application_version;
+  /** Construct a parser for the given version string. */
+  public ApplicationVersionParser(String createdBy) {
+    this.createdBy = createdBy;
   }
 
-  public void Parse() {
+  /** Parse the version string and return an ApplicationVersion. */
+  public ApplicationVersion parse() {
 
     application = "unknown";
-    version = new ApplicationVersion.Version(0, 0, 0, "", "", "");
+    build = "";
+    major = minor = patch = 0;
+    unknown = preRelease = buildInfo = "";
 
-    if (!parseApplicationName()) {
-      return;
+    boolean moreToParse = parseApplicationName();
+
+    if (moreToParse) {
+      moreToParse = parseVersion();
     }
-    if (!ParseVersion()) {
-      return;
+
+    if (moreToParse) {
+      parseBuildName();
     }
-    if (!ParseBuildName()) {
-      return;
-    }
+
+    ApplicationVersion.Version version = new ApplicationVersion.Version(
+        major, minor, patch,
+        unknown, preRelease, buildInfo);
+
+    return new ApplicationVersion(application, build, version);
   }
 
-  private boolean isSpace(String string, int offset /*ref */) {
+  private boolean isSpace(String string, int offset) {
 
-    // auto target = ::arrow::util::string_view(string).substr(offset, 1);
-    // return target.find_first_of(spaces_) != ::arrow::util::string_view::npos;
-
-    return spaces_.contains(string.substring(offset, 1));
+    return findFirstOf(spaces_, string.substring(offset, offset + 1), 0) >= 0;
   }
 
   private int removePrecedingSpaces(String string, int start, int end) {
-
-    // CPP has start, end as references
-    // while (start < end && IsSpace(string, start)) {
-    //   ++start;
-    // }
 
     while (start < end && isSpace(string, start)) {
       ++start;
@@ -79,12 +87,7 @@ public class ApplicationVersionParser {
 
   private int removeTrailingSpaces(String string, int start, int end) {
 
-    // CPP has start, end as references
-    // while (start < (end - 1) && (end - 1) < string.size() && IsSpace(string, end - 1)) {
-    //   --end;
-    // }
-
-    while (start < (end - 1) && (end -1) < string.length() && isSpace(string, end - 1)) {
+    while (start < (end - 1) && (end - 1) < string.length() && isSpace(string, end - 1)) {
       --end;
     }
 
@@ -93,206 +96,304 @@ public class ApplicationVersionParser {
 
   private boolean parseApplicationName() {
 
-    String version_mark = " version ";
-    int version_mark_position = created_by_.indexOf(version_mark);
+    String versionMark = " version ";
+    int versionMarkPosition = createdBy.indexOf(versionMark);
 
-    int application_name_end;
+    int applicationNameEnd;
 
     // No VERSION and BUILD_NAME.
-    if (version_mark_position < 0) {
-      version_start_ = -1;
-      application_name_end = created_by_.length();
+    if (versionMarkPosition < 0) {
+      versionStart = -1;
+      applicationNameEnd = createdBy.length();
     } else {
-      version_start_ = version_mark_position + version_mark.length();
-      application_name_end = version_mark_position;
+      versionStart = versionMarkPosition + versionMark.length();
+      applicationNameEnd = versionMarkPosition;
     }
 
-    int application_name_start = 0;
-    application_name_start = removePrecedingSpaces(created_by_, application_name_start, application_name_end);
-    application_name_end = removeTrailingSpaces(created_by_, application_name_start, application_name_end);
+    int applicationNameStart = 0;
+    applicationNameStart = removePrecedingSpaces(createdBy, applicationNameStart, applicationNameEnd);
+    applicationNameEnd = removeTrailingSpaces(createdBy, applicationNameStart, applicationNameEnd);
 
-    application = created_by_.substring(application_name_start, application_name_end - application_name_start);
+    application = createdBy.substring(applicationNameStart, applicationNameEnd);
 
     return true;
   }
 
-    bool ParseVersion() {
-      // No VERSION.
-      if (version_start_ == std::string::npos) {
-        return false;
-      }
+  private boolean parseVersion() {
 
-      RemovePrecedingSpaces(created_by_, version_start_, created_by_.size());
-      version_end_ = created_by_.find(" (", version_start_);
-      // No BUILD_NAME.
-      if (version_end_ == std::string::npos) {
-        version_end_ = created_by_.size();
-      }
-      RemoveTrailingSpaces(created_by_, version_start_, version_end_);
-      // No VERSION.
-      if (version_start_ == version_end_) {
-        return false;
-      }
-      version_string_ = created_by_.substr(version_start_, version_end_ - version_start_);
+    // No VERSION.
+    if (versionStart < 0) {
+      return false;
+    }
 
-      if (!ParseVersionMajor()) {
-        return false;
-      }
-      if (!ParseVersionMinor()) {
-        return false;
-      }
-      if (!ParseVersionPatch()) {
-        return false;
-      }
-      if (!ParseVersionUnknown()) {
-        return false;
-      }
-      if (!ParseVersionPreRelease()) {
-        return false;
-      }
-      if (!ParseVersionBuildInfo()) {
-        return false;
-      }
+    versionStart = removePrecedingSpaces(createdBy, versionStart, createdBy.length());
+    versionEnd = createdBy.indexOf(" (", versionStart);
 
+    // No BUILD_NAME.
+    if (versionEnd < 0) {
+      versionEnd = createdBy.length();
+    }
+
+    versionEnd = removeTrailingSpaces(createdBy, versionStart, versionEnd);
+
+    // No VERSION.
+    if (versionStart == versionEnd) {
+      return false;
+    }
+
+    versionString = createdBy.substring(versionStart, versionEnd);
+
+    if (!parseVersionMajor()) {
+      return false;
+    }
+    if (!parseVersionMinor()) {
+      return false;
+    }
+    if (!parseVersionPatch()) {
+      return false;
+    }
+    if (!parseVersionUnknown()) {
+      return false;
+    }
+    if (!parseVersionPreRelease()) {
+      return false;
+    }
+    return parseVersionBuildInfo();
+  }
+
+  private boolean parseVersionMajor() {
+
+    int versionMajorStart = 0;
+    int versionMajorEnd = findFirstNotOf(digits_, versionString, 0);
+
+    // MAJOR only.
+    if (versionMajorEnd < 0) {
+      versionMajorEnd = versionString.length();
+      versionParsingPosition = versionMajorEnd;
+    } else {
+      // No ".".
+      if (versionString.charAt(versionMajorEnd) != '.') {
+        return false;
+      }
+      // No MAJOR.
+      if (versionMajorEnd == versionMajorStart) {
+        return false;
+      }
+      versionParsingPosition = versionMajorEnd + 1; // +1 is for '.'.
+    }
+
+    String versionMajorString = versionString.substring(
+        versionMajorStart, versionMajorEnd);
+
+    // Catching number format exception will match the CPP functionality, which uses std:atoi
+    // atoi returns zero if the string is not a valid integer after stripping whitespace
+
+    if (!versionMajorString.isEmpty()) {
+      try {
+        major = Integer.parseInt(versionMajorString);
+      } catch (NumberFormatException e) {
+        minor = 0;
+      }
+    }
+
+    return true;
+  }
+
+  private boolean parseVersionMinor() {
+
+    int versionMinorStart = versionParsingPosition;
+    int versionMinorEnd = findFirstNotOf(digits_, versionString, versionMinorStart);
+
+    // MAJOR.MINOR only.
+    if (versionMinorEnd < 0) {
+      versionMinorEnd = versionString.length();
+      versionParsingPosition = versionMinorEnd;
+    } else {
+      // No ".".
+      if (versionString.charAt(versionMinorEnd) != '.') {
+        return false;
+      }
+      // No MINOR.
+      if (versionMinorEnd == versionMinorStart) {
+        return false;
+      }
+      versionParsingPosition = versionMinorEnd + 1; // +1 is for '.'.
+    }
+
+    String versionMinorString = versionString.substring(
+        versionMinorStart, versionMinorEnd);
+
+    if (!versionMinorString.isEmpty()) {
+      try {
+        minor = Integer.parseInt(versionMinorString);
+      } catch (NumberFormatException e) {
+        minor = 0;
+      }
+    }
+
+    return true;
+  }
+
+  private boolean parseVersionPatch() {
+
+    int versionPatchStart = versionParsingPosition;
+    int versionPatchEnd = findFirstNotOf(digits_, versionString, versionPatchStart);
+
+    // No UNKNOWN, PRE_RELEASE and BUILD_INFO.
+    if (versionPatchEnd < 0) {
+      versionPatchEnd = versionString.length();
+    }
+
+    // No PATCH.
+    if (versionPatchEnd == versionPatchStart) {
+      return false;
+    }
+
+    String versionPatchString = versionString.substring(
+        versionPatchStart, versionPatchEnd);
+
+    try {
+      patch = Integer.parseInt(versionPatchString);
+    } catch (NumberFormatException e) {
+      minor = 0;
+    }
+
+    versionParsingPosition = versionPatchEnd;
+
+    return true;
+  }
+
+  private boolean parseVersionUnknown() {
+
+    // No UNKNOWN.
+    if (versionParsingPosition == versionString.length()) {
       return true;
     }
 
-    bool ParseVersionMajor() {
-      size_t version_major_start = 0;
-      auto version_major_end = version_string_.find_first_not_of(digits_);
-      // MAJOR only.
-      if (version_major_end == std::string::npos) {
-        version_major_end = version_string_.size();
-        version_parsing_position_ = version_major_end;
-      } else {
-        // No ".".
-        if (version_string_[version_major_end] != '.') {
-          return false;
+    int versionUnknownStart = versionParsingPosition;
+    int versionUnknownEnd = findFirstOf(new char[]{'-', '+'}, versionString, versionUnknownStart);
+
+    // No PRE_RELEASE and BUILD_INFO
+    if (versionUnknownEnd < 0) {
+      versionUnknownEnd = versionString.length();
+    }
+
+    unknown = versionString.substring(
+        versionUnknownStart, versionUnknownEnd);
+
+    versionParsingPosition = versionUnknownEnd;
+
+    return true;
+  }
+
+  private boolean parseVersionPreRelease() {
+
+    // No PRE_RELEASE.
+    if (versionParsingPosition == versionString.length() ||
+        versionString.charAt(versionParsingPosition) != '-') {
+      return true;
+    }
+
+    int versionPreReleaseStart = versionParsingPosition + 1; // +1 is for '-'.
+    int versionPreReleaseEnd = findFirstOf('+', versionString, versionPreReleaseStart);
+
+    // No BUILD_INFO
+    if (versionPreReleaseEnd < 0) {
+      versionPreReleaseEnd = versionString.length();
+    }
+
+    preRelease = versionString.substring(
+        versionPreReleaseStart, versionPreReleaseEnd);
+
+    versionParsingPosition = versionPreReleaseEnd;
+
+    return true;
+  }
+
+  private boolean parseVersionBuildInfo() {
+
+    // No BUILD_INFO.
+    if (versionParsingPosition == versionString.length() ||
+        versionString.charAt(versionParsingPosition) != '+') {
+      return true;
+    }
+
+    int versionBuildInfoStart = versionParsingPosition + 1; // +1 is for '+'.
+
+    buildInfo = versionString.substring(versionBuildInfoStart);
+
+    return true;
+  }
+
+  private void parseBuildName() {
+
+    String buildMark = " (build ";
+    int buildMarkPosition = createdBy.indexOf(buildMark, versionEnd);
+
+    // No BUILD_NAME.
+    if (buildMarkPosition < 0) {
+      return; // false
+    }
+
+    int buildNameStart = buildMarkPosition + buildMark.length();
+    buildNameStart = removePrecedingSpaces(createdBy, buildNameStart, createdBy.length());
+
+    int buildNameEnd = findFirstOf(')', createdBy, buildNameStart);
+
+    // No end ")".
+    if (buildNameEnd < 0) {
+      return; // false
+    }
+
+    buildNameEnd = removeTrailingSpaces(createdBy, buildNameStart, buildNameEnd);
+
+    build = createdBy.substring(buildNameStart, buildNameEnd);
+
+    // return true
+  }
+
+  private int findFirstOf(char searchChar, String str, int start) {
+
+    for (int i = start, n = str.length(); i < n; ++i) {
+      if (str.charAt(i) == searchChar) {
+        return i;
+      }
+    }
+
+    return -1;
+  }
+
+  private int findFirstOf(char[] searchChars, String str, int start) {
+
+    for (int i = start, n = str.length(); i < n; ++i) {
+      for (char searchChar : searchChars) {
+        if (str.charAt(i) == searchChar) {
+          return i;
         }
-        // No MAJOR.
-        if (version_major_end == version_major_start) {
-          return false;
+      }
+    }
+
+    return -1;
+  }
+
+  private int findFirstNotOf(char[] searchChars, String str, int start) {
+
+    for (int i = start, n = str.length(); i < n; ++i) {
+
+      boolean match = false;
+
+      for (char searchChar : searchChars) {
+        if (str.charAt(i) == searchChar) {
+          match = true;
+          break;
         }
-        version_parsing_position_ = version_major_end + 1;  // +1 is for '.'.
       }
-      auto version_major_string = version_string_.substr(
-          version_major_start, version_major_end - version_major_start);
-      application_version_.version.major = atoi(version_major_string.c_str());
-      return true;
+
+      if (!match) {
+        return i;
+      }
     }
 
-    bool ParseVersionMinor() {
-      auto version_minor_start = version_parsing_position_;
-      auto version_minor_end =
-          version_string_.find_first_not_of(digits_, version_minor_start);
-      // MAJOR.MINOR only.
-      if (version_minor_end == std::string::npos) {
-        version_minor_end = version_string_.size();
-        version_parsing_position_ = version_minor_end;
-      } else {
-        // No ".".
-        if (version_string_[version_minor_end] != '.') {
-          return false;
-        }
-        // No MINOR.
-        if (version_minor_end == version_minor_start) {
-          return false;
-        }
-        version_parsing_position_ = version_minor_end + 1;  // +1 is for '.'.
-      }
-      auto version_minor_string = version_string_.substr(
-          version_minor_start, version_minor_end - version_minor_start);
-      application_version_.version.minor = atoi(version_minor_string.c_str());
-      return true;
-    }
-
-    bool ParseVersionPatch() {
-      auto version_patch_start = version_parsing_position_;
-      auto version_patch_end =
-          version_string_.find_first_not_of(digits_, version_patch_start);
-      // No UNKNOWN, PRE_RELEASE and BUILD_INFO.
-      if (version_patch_end == std::string::npos) {
-        version_patch_end = version_string_.size();
-      }
-      // No PATCH.
-      if (version_patch_end == version_patch_start) {
-        return false;
-      }
-      auto version_patch_string = version_string_.substr(
-          version_patch_start, version_patch_end - version_patch_start);
-      application_version_.version.patch = atoi(version_patch_string.c_str());
-      version_parsing_position_ = version_patch_end;
-      return true;
-    }
-
-    bool ParseVersionUnknown() {
-      // No UNKNOWN.
-      if (version_parsing_position_ == version_string_.size()) {
-        return true;
-      }
-      auto version_unknown_start = version_parsing_position_;
-      auto version_unknown_end = version_string_.find_first_of("-+", version_unknown_start);
-      // No PRE_RELEASE and BUILD_INFO
-      if (version_unknown_end == std::string::npos) {
-        version_unknown_end = version_string_.size();
-      }
-      application_version_.version.unknown = version_string_.substr(
-          version_unknown_start, version_unknown_end - version_unknown_start);
-      version_parsing_position_ = version_unknown_end;
-      return true;
-    }
-
-    bool ParseVersionPreRelease() {
-      // No PRE_RELEASE.
-      if (version_parsing_position_ == version_string_.size() ||
-          version_string_[version_parsing_position_] != '-') {
-        return true;
-      }
-
-      auto version_pre_release_start = version_parsing_position_ + 1;  // +1 is for '-'.
-      auto version_pre_release_end =
-          version_string_.find_first_of("+", version_pre_release_start);
-      // No BUILD_INFO
-      if (version_pre_release_end == std::string::npos) {
-        version_pre_release_end = version_string_.size();
-      }
-      application_version_.version.pre_release = version_string_.substr(
-          version_pre_release_start, version_pre_release_end - version_pre_release_start);
-      version_parsing_position_ = version_pre_release_end;
-      return true;
-    }
-
-    bool ParseVersionBuildInfo() {
-      // No BUILD_INFO.
-      if (version_parsing_position_ == version_string_.size() ||
-          version_string_[version_parsing_position_] != '+') {
-        return true;
-      }
-
-      auto version_build_info_start = version_parsing_position_ + 1;  // +1 is for '+'.
-      application_version_.version.build_info =
-          version_string_.substr(version_build_info_start);
-      return true;
-    }
-
-    bool ParseBuildName() {
-      std::string build_mark(" (build ");
-      auto build_mark_position = created_by_.find(build_mark, version_end_);
-      // No BUILD_NAME.
-      if (build_mark_position == std::string::npos) {
-        return false;
-      }
-      auto build_name_start = build_mark_position + build_mark.size();
-      RemovePrecedingSpaces(created_by_, build_name_start, created_by_.size());
-      auto build_name_end = created_by_.find_first_of(")", build_name_start);
-      // No end ")".
-      if (build_name_end == std::string::npos) {
-        return false;
-      }
-      RemoveTrailingSpaces(created_by_, build_name_start, build_name_end);
-      application_version_.build_ =
-          created_by_.substr(build_name_start, build_name_end - build_name_start);
-
-      return true;
-    }
+    return -1;
+  }
 }
