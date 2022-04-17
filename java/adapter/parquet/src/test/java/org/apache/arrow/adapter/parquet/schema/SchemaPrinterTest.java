@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.arrow.adapter.parquet;
+package org.apache.arrow.adapter.parquet.schema;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

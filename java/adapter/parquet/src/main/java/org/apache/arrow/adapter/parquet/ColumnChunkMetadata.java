@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.arrow.adapter.parquet.schema.ColumnDescriptor;
+import org.apache.arrow.adapter.parquet.schema.ColumnPath;
 import org.apache.arrow.adapter.parquet.type.ParquetType;
 import org.apache.arrow.adapter.parquet.type.SortOrder;
 import org.apache.parquet.format.ColumnChunk;

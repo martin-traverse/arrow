@@ -15,27 +15,33 @@
  * limitations under the License.
  */
 
-package org.apache.arrow.adapter.parquet;
-
-import java.util.Arrays;
-
-import org.apache.arrow.adapter.parquet.ColumnPath;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+package org.apache.arrow.adapter.parquet.schema;
 
 
-class ColumnPathTest {
+/** Column ordering. */
+public class ColumnOrder {
 
-  @Test
-  void attrsTest() {
+  /** Available column orderings. */
+  public enum Type {
+    UNDEFINED,
+    TYPE_DEFINED_ORDER
+  }
 
-    ColumnPath path = new ColumnPath(Arrays.asList("toplevel", "leaf"));
-    Assertions.assertEquals("toplevel.leaf", path.toDotString());
+  public static final ColumnOrder UNDEFINED = new ColumnOrder(Type.UNDEFINED);
+  public static final ColumnOrder TYPE_DEFINED = new ColumnOrder(Type.TYPE_DEFINED_ORDER);
 
-    ColumnPath path2 = ColumnPath.fromDotString("toplevel.leaf");
-    Assertions.assertEquals("toplevel.leaf", path2.toDotString());
+  private final Type columnOrder;
 
-    ColumnPath extended = path2.extend("another_level");
-    Assertions.assertEquals("toplevel.leaf.another_level", extended.toDotString());
+  public ColumnOrder(Type columnOrder) {
+    this.columnOrder = columnOrder;
+  }
+
+  // Default to Type Defined Order
+  public ColumnOrder() {
+    this.columnOrder = Type.TYPE_DEFINED_ORDER;
+  }
+
+  public Type getOrder() {
+    return columnOrder;
   }
 }

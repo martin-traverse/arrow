@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
-package org.apache.arrow.adapter.parquet;
+package org.apache.arrow.adapter.parquet.schema;
 
+import org.apache.arrow.adapter.parquet.ParquetException;
 import org.apache.arrow.adapter.parquet.type.ConvertedType;
 import org.apache.arrow.adapter.parquet.type.DecimalMetadata;
 import org.apache.arrow.adapter.parquet.type.LogicalType;

@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-package org.apache.arrow.adapter.parquet;
+package org.apache.arrow.adapter.parquet.schema;
 
-import static org.apache.arrow.adapter.parquet.SchemaTestHelpers.newGroup;
-import static org.apache.arrow.adapter.parquet.SchemaTestHelpers.newPrimitive;
+import static org.apache.arrow.adapter.parquet.schema.SchemaTestHelpers.newGroup;
+import static org.apache.arrow.adapter.parquet.schema.SchemaTestHelpers.newPrimitive;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;

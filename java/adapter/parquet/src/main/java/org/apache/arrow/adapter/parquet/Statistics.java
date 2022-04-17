@@ -17,6 +17,7 @@
 
 package org.apache.arrow.adapter.parquet;
 
+import org.apache.arrow.adapter.parquet.schema.ColumnDescriptor;
 import org.apache.parquet.format.ColumnMetaData;
 
 
