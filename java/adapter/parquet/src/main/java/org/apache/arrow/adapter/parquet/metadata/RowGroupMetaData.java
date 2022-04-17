@@ -56,7 +56,7 @@ public class RowGroupMetaData {
     // Based on CPP impl in RowGroupMetaDataImpl which only compares the Thrift row group
 
     if (this == o) { return true; }
-    if (o == null || getClass() != o.getClass()) { return false; }
+    if (!(o instanceof RowGroupMetaData)) { return false; }
     RowGroupMetaData that = (RowGroupMetaData) o;
     return Objects.equals(rowGroup, that.rowGroup);
   }
@@ -71,17 +71,17 @@ public class RowGroupMetaData {
    *
    * The order must match the parent's column ordering.
    */
-  int num_columns() {
+  int numColumns() {
     return rowGroup.getColumnsSize();
   }
 
   /** Number of rows in this row group. */
-  long num_rows() {
+  long numRows() {
     return rowGroup.getNum_rows();
   }
 
   /** Total byte size of all the uncompressed column data in this row group. */
-  long total_byte_size() {
+  long totalByteSize() {
     return rowGroup.getTotal_byte_size();
   }
 
@@ -90,7 +90,7 @@ public class RowGroupMetaData {
    *
    * his information is optional and may be 0 if omitted.
    */
-  long total_compressed_size() {
+  long totalCompressedSize() {
     return rowGroup.getTotal_compressed_size();
   }
 
@@ -100,7 +100,7 @@ public class RowGroupMetaData {
    * The file_offset field that this method exposes is optional.
    * This method will return 0 if that field is not set to a meaningful value.
    */
-  long file_offset() {
+  long fileOffset() {
     return rowGroup.getFile_offset();
   }
 
@@ -113,7 +113,7 @@ public class RowGroupMetaData {
    */
   ColumnChunkMetaData columnChunk(int columnIndex) {
 
-    if (0 < columnIndex && columnIndex < num_columns()) {
+    if (0 < columnIndex && columnIndex < numColumns()) {
 
       return new ColumnChunkMetaData(
           rowGroup.getColumns().get(columnIndex), schema.column(columnIndex),
@@ -121,24 +121,20 @@ public class RowGroupMetaData {
           writerVersion /*, file_decryptor_ */);
     }
     throw new ParquetException(
-        "The file only has " + num_columns() +
+        "The file only has " + numColumns() +
         " columns, requested metadata for column: " + columnIndex);
   }
 
+  /** Indicate if all the RowGroup's ColumnChunks can be decompressed. */
+  boolean canDecompress() {
 
-  // TODO: Compression support
-  /* Indicate if all of the RowGroup's ColumnChunks can be decompressed. */
-  // boolean can_decompress() {
-  //
-  //    int n_columns = num_columns();
-  //
-  //    for (int i = 0; i < n_columns; i++) {
-  //      if ( ColumnChunk(i).canDecompress()) {
-  //        return false;
-  //      }
-  //    }
-  //
-  //    return true;
-  //  }
+    for (int i = 0, n = numColumns(); i < n; ++i) {
+      if (!columnChunk(i).canDecompress()) {
+        return false;
+      }
+    }
+
+    return true;
+  }
 
 }

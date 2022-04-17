@@ -34,6 +34,7 @@ import org.apache.arrow.adapter.parquet.type.SortOrder;
 import org.apache.parquet.format.ColumnChunk;
 import org.apache.parquet.format.ColumnCryptoMetaData;
 import org.apache.parquet.format.ColumnMetaData;
+import org.apache.parquet.format.CompressionCodec;
 
 
 /** ColumnChunkMetaData is a proxy around Thrift format ColumnChunkMetaData. */
@@ -215,11 +216,19 @@ public class ColumnChunkMetaData {
     return isStatsSet() ? possibleStats : null;
   }
 
+  /** Check whether this column chunk can be decompressed. */
+  public boolean canDecompress() {
+
+    // For now, only return true when compression is disabled
+    // Real impl will check compression() and see if the codec is available
+
+    return !columnMetaData.isSetCodec() || columnMetaData.getCodec() == CompressionCodec.UNCOMPRESSED;
+  }
+
   // TODO: Compression
   // Compression::type compression() const;
   // Indicate if the ColumnChunk compression is supported by the current
   // compiled parquet library.
-  // bool can_decompress() const;
 
   // TODO: Crypto support
   // ColumnCryptoMetaData cryptoMetadata() {}
