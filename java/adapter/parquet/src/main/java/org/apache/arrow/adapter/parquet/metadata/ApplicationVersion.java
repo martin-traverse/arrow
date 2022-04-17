@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
-package org.apache.arrow.adapter.parquet;
+package org.apache.arrow.adapter.parquet.metadata;
 
 import java.util.Objects;
 
+import org.apache.arrow.adapter.parquet.statistics.EncodedStatistics;
 import org.apache.arrow.adapter.parquet.type.ParquetType;
 import org.apache.arrow.adapter.parquet.type.SortOrder;
 

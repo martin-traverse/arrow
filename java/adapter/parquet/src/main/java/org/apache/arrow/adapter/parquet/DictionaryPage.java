@@ -17,6 +17,7 @@
 
 package org.apache.arrow.adapter.parquet;
 
+import org.apache.arrow.adapter.parquet.type.Encoding;
 import org.apache.arrow.memory.ArrowBuf;
 
 

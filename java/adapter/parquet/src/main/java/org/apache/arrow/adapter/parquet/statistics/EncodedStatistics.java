@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.arrow.adapter.parquet;
+package org.apache.arrow.adapter.parquet.statistics;
 
 
 /** Structure represented encoded statistics to be written to and from Parquet serialized metadata. */

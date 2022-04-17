@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.arrow.adapter.parquet;
+package org.apache.arrow.adapter.parquet.metadata;
 
 
 /** Parser for Parquet version strings, to build the ApplicationVersion class. */

@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
-package org.apache.arrow.adapter.parquet;
+package org.apache.arrow.adapter.parquet.statistics;
 
+import org.apache.arrow.adapter.parquet.ParquetException;
 import org.apache.arrow.adapter.parquet.schema.ColumnDescriptor;
 import org.apache.parquet.format.ColumnMetaData;
 

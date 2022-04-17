@@ -15,14 +15,19 @@
  * limitations under the License.
  */
 
-package org.apache.arrow.adapter.parquet;
+package org.apache.arrow.adapter.parquet.metadata;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.arrow.adapter.parquet.PageType;
+import org.apache.arrow.adapter.parquet.ParquetException;
 import org.apache.arrow.adapter.parquet.schema.ColumnDescriptor;
 import org.apache.arrow.adapter.parquet.schema.ColumnPath;
+import org.apache.arrow.adapter.parquet.statistics.EncodedStatistics;
+import org.apache.arrow.adapter.parquet.statistics.Statistics;
+import org.apache.arrow.adapter.parquet.type.Encoding;
 import org.apache.arrow.adapter.parquet.type.ParquetType;
 import org.apache.arrow.adapter.parquet.type.SortOrder;
 import org.apache.parquet.format.ColumnChunk;

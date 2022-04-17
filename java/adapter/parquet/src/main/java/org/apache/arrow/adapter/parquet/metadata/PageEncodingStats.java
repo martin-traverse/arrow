@@ -15,27 +15,35 @@
  * limitations under the License.
  */
 
-package org.apache.arrow.adapter.parquet;
+package org.apache.arrow.adapter.parquet.metadata;
 
-/** Parquet data encodings, mirrors parquet::Encoding. */
-public enum Encoding {
 
-  PLAIN, // = 0,
+import org.apache.arrow.adapter.parquet.PageType;
+import org.apache.arrow.adapter.parquet.type.Encoding;
 
-  /** This encoding is deprecated, it was never used. */
-  @Deprecated
-  __GROUP_VAR_INT, // = 1;
+/** Public struct for Thrift PageEncodingStats in ColumnChunkMetaData. */
+public class PageEncodingStats {
 
-  PLAIN_DICTIONARY, // = 2,
-  RLE, // = 3,
-  BIT_PACKED, // = 4,
-  DELTA_BINARY_PACKED, // = 5,
-  DELTA_LENGTH_BYTE_ARRAY, // = 6,
-  DELTA_BYTE_ARRAY, // = 7,
-  RLE_DICTIONARY, // = 8,
-  BYTE_STREAM_SPLIT, // = 9,
+  private final PageType pageType;
+  private final Encoding encoding;
+  private final int count;
 
-  // Should always be last element (except UNKNOWN)
-  UNDEFINED, // = 10,
-  UNKNOWN, // = 999
+  /** Public struct for Thrift PageEncodingStats in ColumnChunkMetaData. */
+  public PageEncodingStats(PageType pageType, Encoding encoding, int count) {
+    this.pageType = pageType;
+    this.encoding = encoding;
+    this.count = count;
+  }
+
+  public PageType getPageType() {
+    return pageType;
+  }
+
+  public Encoding getEncoding() {
+    return encoding;
+  }
+
+  public int getCount() {
+    return count;
+  }
 }
