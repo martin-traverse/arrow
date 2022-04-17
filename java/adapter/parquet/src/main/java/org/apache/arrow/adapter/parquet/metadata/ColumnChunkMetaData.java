@@ -18,6 +18,7 @@
 package org.apache.arrow.adapter.parquet.metadata;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -36,7 +37,7 @@ import org.apache.parquet.format.ColumnMetaData;
 
 
 /** ColumnChunkMetaData is a proxy around Thrift format ColumnChunkMetaData. */
-public class ColumnChunkMetadata {
+public class ColumnChunkMetaData {
 
   private final List<Encoding> encodings;
   private final List<PageEncodingStats> encodingStats;
@@ -51,7 +52,7 @@ public class ColumnChunkMetadata {
   // private final ColumnMetaData decryptedMetadata;
 
   /** ColumnChunkMetaData is a proxy around Thrift format ColumnChunkMetaData. */
-  public ColumnChunkMetadata(
+  public ColumnChunkMetaData(
       ColumnChunk column,
       ColumnDescriptor descr,
       short rowGroupOrdinal, short columnOrdinal,
@@ -80,22 +81,50 @@ public class ColumnChunkMetadata {
       }
     }
 
-    this.encodings = new ArrayList<>();
-    this.encodingStats = new ArrayList<>();
+    List<Encoding> encodings = new ArrayList<>();
+    List<PageEncodingStats> encodingStats = new ArrayList<>();
 
     for (org.apache.parquet.format.Encoding encoding : columnMetaData.getEncodings()) {
       encodings.add(convertEnum(encoding, Encoding.class));
     }
 
-    for (org.apache.parquet.format.PageEncodingStats encodingStats : columnMetaData.getEncoding_stats()) {
-      this.encodingStats.add(new PageEncodingStats(
-          convertEnum(encodingStats.getPage_type(), PageType.class),
-          convertEnum(encodingStats.getEncoding(), Encoding.class),
-          encodingStats.getCount()));
+    for (org.apache.parquet.format.PageEncodingStats encodingStat : columnMetaData.getEncoding_stats()) {
+      encodingStats.add(new PageEncodingStats(
+          convertEnum(encodingStat.getPage_type(), PageType.class),
+          convertEnum(encodingStat.getEncoding(), Encoding.class),
+          encodingStat.getCount()));
     }
+
+    this.encodings = Collections.unmodifiableList(encodings);
+    this.encodingStats = Collections.unmodifiableList(encodingStats);
 
     possibleStats = null;
   }
+
+  public List<Encoding> getEncodings() {
+    return encodings;
+  }
+
+  public List<PageEncodingStats> getEncodingStats() {
+    return encodingStats;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+
+    // Based on CPP ColumnChunkMetaDataImpl which only compares columnMetadata
+
+    if (this == o) { return true; }
+    if (!(o instanceof ColumnChunkMetaData)) { return false; }
+    ColumnChunkMetaData that = (ColumnChunkMetaData) o;
+    return Objects.equals(columnMetaData, that.columnMetaData);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(columnMetaData);
+  }
+
 
   private <T extends Enum<T>, S extends Enum<S>> T convertEnum(S source, Class<T> target) {
     return Enum.valueOf(target, source.name());
@@ -128,14 +157,6 @@ public class ColumnChunkMetadata {
     return new ColumnPath(columnMetaData.getPath_in_schema());
   }
 
-  public List<Encoding> encodings() {
-    return encodings;
-  }
-
-  public List<PageEncodingStats> encodingStats() {
-    return encodingStats;
-  }
-
   public boolean hasDictionaryPage() {
     return columnMetaData.isSetDictionary_page_offset();
   }
@@ -162,22 +183,6 @@ public class ColumnChunkMetadata {
 
   public long total_uncompressed_size() {
     return columnMetaData.getTotal_uncompressed_size();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-
-    // Based on CPP ColumnChunkMetaDataImpl which only compares columnMetadata
-
-    if (this == o) { return true; }
-    if (!(o instanceof ColumnChunkMetadata)) { return false; }
-    ColumnChunkMetadata that = (ColumnChunkMetadata) o;
-    return Objects.equals(columnMetaData, that.columnMetaData);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(columnMetaData);
   }
 
   /** Check if statistics are set and are valid. */

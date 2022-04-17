@@ -25,7 +25,7 @@ import org.apache.parquet.format.RowGroup;
 
 
 /** FileMetaData is a proxy around Thrift format FileMetaData. */
-public class RowGroupMetadata {
+public class RowGroupMetaData {
 
   private final RowGroup rowGroup;
   private final SchemaDescriptor schema;
@@ -35,7 +35,7 @@ public class RowGroupMetadata {
   // private final InternalFileDecryptor file_decryptor_;
 
   /** Create a RowGroupMetaData from a serialized thrift message. */
-  public RowGroupMetadata(
+  public RowGroupMetaData(
       RowGroup rowGroup, SchemaDescriptor schema,
       ApplicationVersion writerVersion
       /*, InternalFileDecryptor file_decryptor */) {
@@ -57,7 +57,7 @@ public class RowGroupMetadata {
 
     if (this == o) { return true; }
     if (o == null || getClass() != o.getClass()) { return false; }
-    RowGroupMetadata that = (RowGroupMetadata) o;
+    RowGroupMetaData that = (RowGroupMetaData) o;
     return Objects.equals(rowGroup, that.rowGroup);
   }
 
@@ -111,11 +111,11 @@ public class RowGroupMetadata {
    * @return The ColumnChunkMetaData of the corresponding column ordinal.
    * @throws ParquetException if the columnIndex is out of bound.
    */
-  ColumnChunkMetadata columnChunk(int columnIndex) {
+  ColumnChunkMetaData columnChunk(int columnIndex) {
 
     if (0 < columnIndex && columnIndex < num_columns()) {
 
-      return new ColumnChunkMetadata(
+      return new ColumnChunkMetaData(
           rowGroup.getColumns().get(columnIndex), schema.column(columnIndex),
           rowGroup.getOrdinal(), (short) columnIndex,
           writerVersion /*, file_decryptor_ */);
