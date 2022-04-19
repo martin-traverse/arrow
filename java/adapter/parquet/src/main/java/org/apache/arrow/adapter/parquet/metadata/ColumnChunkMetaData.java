@@ -102,11 +102,11 @@ public class ColumnChunkMetaData {
     possibleStats = null;
   }
 
-  public List<Encoding> getEncodings() {
+  public List<Encoding> encodings() {
     return encodings;
   }
 
-  public List<PageEncodingStats> getEncodingStats() {
+  public List<PageEncodingStats> encodingStats() {
     return encodingStats;
   }
 
